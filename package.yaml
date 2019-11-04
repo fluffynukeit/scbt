@@ -24,6 +24,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+    - text
+    - containers
 
 executables:
   scbt-exe:
