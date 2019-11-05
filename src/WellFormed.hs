@@ -6,7 +6,7 @@ import Judgments
 import Syntax
 import Context
 
-instance Judgment TauKappa Bool where
+instance Turnstile TauKappa Bool where
     -- (|-) gamma (TAlpha a ::: kappa) = True -- TODO:: VarSort
     -- (|-) gamma (TAlphaHat ahat ::: kappa) = True -- TODO: SolvedVarSort
     (|-) gamma (TOne ::: Star) = True -- UnitSort
@@ -14,10 +14,10 @@ instance Judgment TauKappa Bool where
     (|-) gamma (TNat Zero ::: N) = True -- ZeroSort
     (|-) gamma (TNat (Succ t) ::: N) = gamma |- (TNat t) ::: N -- SuccSort
 
-instance Judgment Prop Bool where
+instance Turnstile Prop Bool where
     (|-) gamma (Prop (t :=: t')) = gamma |- t ::: N && gamma |- t' ::: N -- EqProp
 
-instance Judgment Type Bool where
+instance Turnstile Type Bool where
     -- TODO: VarWF
     -- TODO: SolvedVarWF
     (|-) gamma (Type AOne) = True -- UnitWF
@@ -28,14 +28,14 @@ instance Judgment Type Bool where
     (|-) gamma (Type (p :>: a)) = gamma |- Prop p && gamma |- Type a -- ImpliesWF
     (|-) gamma (Type (a :/\: p)) = gamma |- Prop p && gamma |- Type a -- WithWF
 
-instance Judgment Ptype Bool where
+instance Turnstile Ptype Bool where
     -- (|-) gamma (Ptype a Bang) = TODO: PrincipalWF
     (|-) gamma (Ptype a Slash) = gamma |- Type a -- NonPrincipalWF
 
-instance Judgment Types Bool where
+instance Turnstile Types Bool where
     (|-) gamma (Types as) = all ((|-) gamma) as -- TypevecWF
 
-instance Judgment Ptypes Bool where
+instance Turnstile Ptypes Bool where
     (|-) gamma (Ptypes p types) = all (\(Type a)-> gamma |- Ptype a p) types -- PrincipalTypevecWF
 
 ctx Empty = True -- EmptyCtx

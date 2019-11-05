@@ -2,6 +2,7 @@
 module Context 
     ( module Context
     , elem
+    , find
     ) where
 
 import Syntax

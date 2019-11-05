@@ -72,7 +72,7 @@ data F -- FACT of contextual knowlege
     = FuKappa U Kappa
     | FxAp X A SmallP
     | FAlphaHatKappaTau AlphaHat Kappa Tau
-    | FAlphat Alpha T
+    | FAlphaT Alpha T
     | FMarkP P
     | FMarkAlphaHat AlphaHat
     | FMarkU U
