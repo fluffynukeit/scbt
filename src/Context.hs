@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 module Context 
     ( module Context
     , elem

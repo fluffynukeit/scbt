@@ -1,4 +1,3 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 -- | This module implements the well-formed rules in Figure 17.
 module WellFormed where
 
@@ -9,10 +8,10 @@ import Context
 instance Turnstile TauKappa Bool where
     -- (|-) gamma (TAlpha a ::: kappa) = True -- TODO:: VarSort
     -- (|-) gamma (TAlphaHat ahat ::: kappa) = True -- TODO: SolvedVarSort
-    (|-) gamma (TOne ::: Star) = True -- UnitSort
-    (|-) gamma (TBin tau1 _ tau2 ::: Star) = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star -- BinSort
-    (|-) gamma (TNat Zero ::: N) = True -- ZeroSort
-    (|-) gamma (TNat (Succ t) ::: N) = gamma |- (TNat t) ::: N -- SuccSort
+    (|-) gamma (Unit ::: Star) = True -- UnitSort
+    (|-) gamma (Conn tau1 tau2 ::: Star) = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star -- BinSort
+    (|-) gamma (Zero ::: N) = True -- ZeroSort
+    (|-) gamma (Succ t ::: N) = gamma |- t ::: N -- SuccSort
 
 instance Turnstile Prop Bool where
     (|-) gamma (Prop (t :=: t')) = gamma |- t ::: N && gamma |- t' ::: N -- EqProp
@@ -20,11 +19,11 @@ instance Turnstile Prop Bool where
 instance Turnstile Type Bool where
     -- TODO: VarWF
     -- TODO: SolvedVarWF
-    (|-) gamma (Type AOne) = True -- UnitWF
-    (|-) gamma (Type (ABin a _ b)) = gamma |- Type a && gamma |- Type b -- BinWF
-    (|-) gamma (Type (AVec t a)) = gamma |- t ::: N && gamma |- (Type a) -- VecWF
-    (|-) gamma (Type (AForall alpha kappa a)) = gamma `Comma` (FuKappa (Univ alpha) kappa) |- Type a -- ForallWF
-    (|-) gamma (Type (AExists alpha kappa a)) = gamma `Comma` (FuKappa (Univ alpha) kappa) |- Type a -- ExistsWF
+    (|-) gamma (Type Unit) = True -- UnitWF
+    (|-) gamma (Type (Conn a b)) = gamma |- Type a && gamma |- Type b -- BinWF
+    (|-) gamma (Type (Vec t a)) = gamma |- t ::: N && gamma |- (Type a) -- VecWF
+    (|-) gamma (Type (V (alpha ::: kappa) a)) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ForallWF
+    (|-) gamma (Type (E (alpha :::kappa) a)) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ExistsWF
     (|-) gamma (Type (p :>: a)) = gamma |- Prop p && gamma |- Type a -- ImpliesWF
     (|-) gamma (Type (a :/\: p)) = gamma |- Prop p && gamma |- Type a -- WithWF
 
@@ -42,5 +41,5 @@ ctx Empty = True -- EmptyCtx
 --ctx (gamma `Comma` (FxAp x a Slash)) = ctx gamma && gamma |- Type a -- TODO dom(gamma) -- HypCtx
 --ctx (gamma `Comma` (FxAp x a Bang)) = ctx gamma && gamma |- Type a -- TODO dom(gamma), etc -- Hyp!Ctx
 -- TODO VarCtx, SolvedCtx, EqnVarCtx
-ctx (gamma `Comma` arr@(FMarkU u)) = ctx gamma && arr `notElem` gamma
+ctx (gamma `Comma` mark@(Mark u)) = ctx gamma && mark `notElem` gamma
 
