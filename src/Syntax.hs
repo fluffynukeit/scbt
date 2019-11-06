@@ -69,7 +69,7 @@ pattern Conn a b <-
 data Equals e f where
     (:=:) :: e -> f -> Equals e f
     deriving (Eq)
-infix 7 :=:
+infix 6 :=:
 
 -- | Annotation of type a : b
 data Anno e f where
