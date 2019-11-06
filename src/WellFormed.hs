@@ -5,7 +5,7 @@ import Judgments
 import Syntax
 import Context
 
-instance Turnstile TauKappa Bool where
+instance Turnstile (Tau ::: Kappa) Bool where
     -- (|-) gamma (TAlpha a ::: kappa) = True -- TODO:: VarSort
     -- (|-) gamma (TAlphaHat ahat ::: kappa) = True -- TODO: SolvedVarSort
     (|-) gamma (Unit ::: Star) = True -- UnitSort

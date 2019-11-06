@@ -22,7 +22,7 @@ data DecSyn (k :: EKind) where
     Un :: DecSyn k
     Lam :: Sym -> E -> DecSyn k
     Rec :: Sym -> V -> DecSyn k
-    Ann :: Anno (DecSyn k) A -> DecSyn k
+    Ann :: DecSyn k ::: A -> DecSyn k
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
     Inj :: Inj -> DecSyn k -> DecSyn k
     Nil :: DecSyn k
@@ -62,6 +62,7 @@ type B = A
 type T = Syn Tm
 type Tau = T
 type Sigma = T
+type T' = T
 
 -- | Syntax of types and monotypes
 data Syn (k :: Kind) where
@@ -74,8 +75,8 @@ data Syn (k :: Kind) where
     AlphaHat :: Sym -> Syn k
 
     -- | Syntax for Types only
-    V :: Anno Sym Kappa -> A -> A
-    E :: Anno Sym Kappa -> A -> A
+    V :: Sym ::: Kappa -> A -> A
+    E :: Sym ::: Kappa -> A -> A
     (:>:) :: P -> A -> A
     (:/\:) :: A -> P -> A
     Vec :: Syn Tm -> A -> A
@@ -99,29 +100,29 @@ pattern Conn a b <-
     )
 
 -- | Equalities =
-data Equals e f where
-    (:=:) :: e -> f -> Equals e f
+data (:=:) e f where
+    (:=:) :: e -> f -> e :=: f
     deriving (Eq)
 infix 6 :=:
 
 -- | Annotation of type a : b
-data Anno e f where
-    (:::) :: e -> f -> Anno e f
+data (:::) e f where
+    (:::) :: e -> f -> e ::: f
     deriving (Eq)
 infix 7 :::
 
 -- | Propositions
-type P = Equals (Syn Tm) (Syn Tm)
+type P = T :=: T'
 
 -- | Contexts
 type Gamma = Seq Info
 
 data Info where
-    Kappa :: Anno Sym Kappa -> Info
-    HatKappa :: Anno Sym Kappa -> Info
-    XAp :: Anno Sym (Syn Ty) -> SmallP -> Info
-    HatEquals :: Equals (Anno Sym Kappa) (Syn Tm) -> Info 
-    Equals :: Equals Sym (Syn Tm) -> Info
+    Kappa :: Sym ::: Kappa -> Info
+    HatKappa :: Sym ::: Kappa -> Info
+    XAp :: Sym ::: A -> SmallP -> Info
+    HatEquals :: (Sym ::: Kappa) :=: Tau -> Info 
+    Equals :: Sym :=: Tau -> Info
     Mark :: Sym -> Info
     deriving (Eq)
 

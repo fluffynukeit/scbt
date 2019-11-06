@@ -10,7 +10,7 @@ class Turnstile a b where
 infix 6 |-
 
 -- | Algorithmic judgments from Appendix 2
-type TauKappa = Anno Tau Kappa -- Index term/monotype is well-formed (Fig 17)
+-- Tau ::: Kappa -- Index term/monotype is well-formed (Fig 17), no additional type declaration needed
 newtype Prop = Prop P  -- Proposition is well-formed (Fig 17)
 newtype Type = Type A -- Polytype is well-formed (Fig 17)
 -- Note: [Gamma]A applying a context, as substitution, to a type is implemented in Context.hs
