@@ -10,12 +10,15 @@ class Turnstile a b where
 infix 6 |-
 
 -- | Algorithmic judgments from Appendix 2
-type TauKappa = Anno Tau Kappa
-newtype Prop = Prop P  -- Proposition is well-formed
-newtype Type = Type A -- Polytype is well-formed
+type TauKappa = Anno Tau Kappa -- Index term/monotype is well-formed (Fig 17)
+newtype Prop = Prop P  -- Proposition is well-formed (Fig 17)
+newtype Type = Type A -- Polytype is well-formed (Fig 17)
+-- Note: [Gamma]A applying a context, as substitution, to a type is implemented in Context.hs
 
--- Variants of Polytype is well-formed
+-- Variants of Polytype is well-formed (Fig 17)
 data Ptype = Ptype A SmallP
 newtype Types = Types [Type]
 data Ptypes = Ptypes SmallP [Type]
 
+
+data AlgoChecking = E :<=: A
