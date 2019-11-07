@@ -121,8 +121,8 @@ data Info where
     Kappa :: Sym ::: Kappa -> Info
     HatKappa :: Sym ::: Kappa -> Info
     XAp :: Sym ::: A -> SmallP -> Info
-    HatEquals :: (Sym ::: Kappa) :=: Tau -> Info 
     Equals :: Sym :=: Tau -> Info
+    HatEquals :: (Sym ::: Kappa) :=: Tau -> Info
     Mark :: Sym -> Info
     deriving (Eq)
 

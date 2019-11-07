@@ -3,7 +3,7 @@ module Judgments where
 import Syntax
 
 -- | A Turnstile is a type evaluating to a result, either bool
--- or updated context typicall.  It implements the |- turnstile
+-- or updated context typically.  It implements the |- turnstile
 -- notation.
 class Turnstile a b where
     (|-) :: Gamma -> a -> b
@@ -20,5 +20,7 @@ data Ptype = Ptype A SmallP
 newtype Types = Types [Type]
 data Ptypes = Ptypes SmallP [Type]
 
+data Instantiate = Sym := (T ::: Kappa)
+infix 6 :=
 
-data AlgoChecking = E :<=: A
+data (:<=:) = E :<=: (A, SmallP) -- Algorithmic checking, Figure 14
