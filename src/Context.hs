@@ -11,74 +11,50 @@ pattern Empty = S.Empty
 -- | Implementation of hole notation in section 5.2.
 --
 -- Hole notation splits a context into left and right segments at the hole boundary.
--- Different utility functions provide the search criteria for the hole.
--- A hole is found when the list of criteria is satisfied.
 
--- | True iff Info has a universal variable (one without hat)
-noHat :: Info -> Bool
-noHat (Kappa _) = True
-noHat (Equals _) = True
-noHat _ = False
-
--- | True iff Info has a universal variable of matching symbol
-noHatOf :: Sym -> Info -> Bool
-noHatOf s = \case
-    Kappa (s' ::: _) -> s == s'
-    Equals (s' :=: _) -> s == s'
-    _ -> False
-
--- | True iff Info has an existential variable
-hat :: Info -> Bool
-hat (HatKappa _) = True
-hat (HatEquals _) = True
-hat _ = False
-
--- | True iff Info has an existential variable of matching symbol
-hatOf :: Sym -> Info -> Bool
-hatOf s = \case
-    HatKappa (s' ::: _) -> s == s'
-    HatEquals (s' ::: _ :=: _ ) -> s == s'
-    _ -> False
-
--- | True iff Info has a sort annotation kappa
-kappa :: Info -> Bool
-kappa (Kappa _) = True
-kappa (HatKappa _) = True
-kappa (HatEquals _) = True
-kappa _ = False
-
--- | True iff Info has a sort annotation of matching sort
-kappaOf :: Kappa -> Info -> Bool
-kappaOf k = \case
-    Kappa (_ ::: k') -> k == k'
-    HatKappa (_ ::: k') -> k == k'
-    HatEquals (_ ::: k' :=: _) -> k == k'
-    _ -> False
-
--- | True iff Info has a solved tau
-tau :: Info -> Bool
-tau (Equals _) = True
-tau (HatEquals _) = True
-tau _ = False
-
--- | True iff Info has a solved tau of matching term/monoterm
-tauOf :: Tau -> Info -> Bool
-tauOf t = \case
-    HatEquals (_ ::: _ :=: t') -> t == t'
-    Equals (_ :=: t') -> t == t'
-    _ -> False
-
-
--- | Split a context based on predicate condition list, if possible.
+-- | Split a context based on a piece of context information.
 -- Implements the Gamma [stuff] hole notation.
-hole :: [Info -> Bool] -> Gamma -> Maybe (Gamma, Info, Gamma)
-hole preds gamma = 
-    -- Pipe the context info element into the list of predicates
-    -- and ensure they are all True
-    let satisfied k = foldl' (&&) True (map ($ k) preds)
-    in case S.breakl satisfied gamma of
+hole1 :: Info -> Gamma -> Maybe (Gamma, Gamma)
+hole1 info gamma = case S.breakl ((==) info) gamma of
         (_, S.Empty) -> Nothing -- no matching info
-        (gamL, theta S.:<| gamR) -> Just (gamL, theta, gamR)
+        (gamL, match S.:<| gamR) -> Just (gamL, gamR)
+
+-- | Like hole but with 2 holes
+hole2 :: Info -> Info -> Gamma -> Maybe (Gamma, Gamma, Gamma)
+hole2 p1 p2 gamma
+    | Just (gamL, gamL') <- hole1 p1 gamma
+    , Just (gamM, gamR) <- hole1 p2 gamL'
+    = Just (gamL, gamM, gamR)
+hole2 _ _ _ = Nothing
+
+-- | Split a context into a list of gammas, returning a list length
+-- 1 greater than the number of search items for a pattern match and
+-- some different length for a match failure.
+-- 
+--  hole [A,B] Gamma yields (GamL, GamM, GamR) on success
+--  where Gamma = (GamL, A, GamM, B, GamR) 
+--
+-- This is more convenient for pattern matching than hole1 and hole2
+-- because we usually (always?) know how many segments are required
+-- and can pattern match on the list elements themselves.
+hole :: [Info] -> Gamma -> [Gamma]
+hole [] gamma = [gamma] -- remaining context (possibly empty) becomes the final segment
+hole _ Empty = [] -- can't split an empty context into any more segments.  Failure.
+hole (i:is) gamma = case hole1 i gamma of
+    Nothing -> [gamma] -- can't find this info item, so stop processing
+    Just (gamL, gamR) -> gamL : hole is gamR
+
+-- | Reassemble a gamma from hole representation
+unhole1 gl t gr = gl `Comma` t S.>< gr
+
+-- | Same as unhole but with 2 holes
+unhole2 gl t1 gm t2 gr = gl `Comma` t1 S.>< gm `Comma` t2 S.>< gr
+
+-- | Insert information elements into the holes made by hole function.
+unhole :: [Gamma] -> [[Info]] -> Gamma
+unhole [] _ = Empty
+unhole g [] = mconcat g -- nothing to change, just concat everything remaining
+unhole (g:gs) (is:iis) = g S.>< S.fromList is S.>< unhole gs iis
 
 
 -- | Implements Figure 12, applying a context to a Type
@@ -88,21 +64,29 @@ class Subst a where
 -- | Substitution into terms/monoterms
 instance Subst Tau where
     subst gamma alpha@(Alpha sym) = 
-        -- use hole notation for the search for convenience
-        case hole [noHatOf sym, tauOf alpha] gamma of 
-            Just (_, Equals (_ :=: tau), _) -> subst gamma tau
-            _ -> alpha
-
+        -- we can't use hole notation here because we don't yet know tau.
+        -- Instead, we just have to search for a matching alpha
+        let result = find matchingSymbol gamma
+            matchingSymbol = \case
+                Equals (sym' :=: _) | sym == sym' -> True
+                _ -> False
+        in case result of
+            Just (Equals (_ :=: tau)) -> subst gamma tau
+            Nothing -> alpha
     subst gamma alphaHat@(AlphaHat sym) = 
-        case hole [hatOf sym, kappa, tau] gamma of
-            Just (l, HatEquals (_ ::: _ :=: tau), r) -> subst gamma tau
-            _ -> alphaHat 
-            -- ^ does this also cover the [alphaHat : kappa] case in the figure?
+        let result = find matchingSymbol gamma
+            matchingSymbol = \case
+                HatEquals (sym' ::: kappa :=: tau) | sym == sym' -> True
+                _ -> False
+        in case result of
+            Just (HatEquals (sym ::: kappa :=: tau)) -> subst gamma tau
+            Nothing -> alphaHat
 
 -- | Substitution into predicates
 instance Subst P where
     subst gamma (t1 :=: t2) = subst gamma t1 :=: subst gamma t2
 
+-- | Substituion into types
 instance Subst A where
     subst gamma (p :>: a) = subst gamma p :>: subst gamma a
     subst gamma (a :/\: p) = subst gamma a :/\: subst gamma p

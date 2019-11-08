@@ -116,6 +116,7 @@ type P = T :=: T'
 
 -- | Contexts
 type Gamma = Seq Info
+type Delta = Gamma
 
 data Info where
     Kappa :: Sym ::: Kappa -> Info

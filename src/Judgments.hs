@@ -7,7 +7,7 @@ import Syntax
 -- notation.
 class Turnstile a b where
     (|-) :: Gamma -> a -> b
-infix 6 |-
+infix 5 |-
 
 -- | Algorithmic judgments from Appendix 2
 -- Tau ::: Kappa -- Index term/monotype is well-formed (Fig 17), no additional type declaration needed
