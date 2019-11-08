@@ -4,7 +4,8 @@ Implements "Sound and Complete Bidirectional Typechecking..." by Dunfield and Kr
 The "Sound and Complete" paper is the follow up to their "Complete and Easy Bidirectional Typechecking..."
 paper from 2013.  Sound and Complete allows indexed types (GADTS).
 
-Link to the arxiv: https://arxiv.org/abs/1601.05106
+Link to the arxiv main page (version 2 is the most complete one): https://arxiv.org/abs/1601.05106v2
+Direct PDF link (v2): https://arxiv.org/pdf/1601.05106v2.pdf
 
 This implementation is inspired by Soham Chowdhury's partial (at time of this writing) implementation of
 the rules in earlier drafts of Sound and Complete, and for which he is credited in the published paper.
