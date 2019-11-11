@@ -39,6 +39,7 @@ library:
   dependencies:
     - text
     - containers
+    - split
 
 executables:
   scbt-exe:

@@ -6,8 +6,8 @@ import Syntax
 import Context
 
 instance Turnstile (Tau ::: Kappa) Bool where
-    -- (|-) gamma (TAlpha a ::: kappa) = True -- TODO:: VarSort
-    -- (|-) gamma (TAlphaHat ahat ::: kappa) = True -- TODO: SolvedVarSort
+    -- (|-) gamma (TNoHat a ::: kappa) = True -- TODO:: VarSort
+    -- (|-) gamma (THat ahat ::: kappa) = True -- TODO: SolvedVarSort
     gamma |- Unit ::: Star = True -- UnitSort
     gamma |- Conn tau1 tau2 ::: Star = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star -- BinSort
     gamma |- Zero ::: N = True -- ZeroSort

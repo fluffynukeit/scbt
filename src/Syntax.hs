@@ -71,8 +71,8 @@ data Syn (k :: Kind) where
     (:->:) :: Syn k -> Syn k -> Syn k
     (:+:) :: Syn k -> Syn k -> Syn k
     (:*:) :: Syn k -> Syn k -> Syn k
-    Alpha :: Sym -> Syn k
-    AlphaHat :: Sym -> Syn k
+    NoHat :: Sym -> Syn k
+    Hat :: Sym -> Syn k
 
     -- | Syntax for Types only
     V :: Sym ::: Kappa -> A -> A
@@ -97,6 +97,18 @@ pattern Conn a b <-
     _ -> Nothing
     ) 
     -> Just (a,b)
+    )
+
+-- | Pattern for extracting a binary operator constructor.
+pattern Op a <- 
+    (
+    (\case
+    _ :->: _ -> Just (:->:)
+    _ :+: _ -> Just (:+:)
+    _ :*: _ -> Just (:*:)
+    _ -> Nothing
+    ) 
+    -> Just a
     )
 
 -- | Equalities =
