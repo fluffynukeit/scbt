@@ -8,7 +8,7 @@ import WellFormed
 
 import Data.Text
 
-instance Turnstile Instantiate Delta where 
+instance Turnstile (:=) Delta where 
 
   -- In some of these definitions, a pattern guard is needed instead of a view
   -- pattern so that bound variables can be in scope for the hole function call.
@@ -23,7 +23,7 @@ instance Turnstile Instantiate Delta where
       where a1 = Data.Text.pack "blah"
 
   -- InstBin
-  gamma |- a := b@(Conn t1 t2) ::: Star | h@[_,_] <- gamma <@> [[HatKappa $ a ::: Star]]= 
+  gamma |- a := b@(Bin t1 t2) ::: Star | h@[_,_] <- gamma <@> [[HatKappa $ a ::: Star]]= 
     let Op op = b
         a1 = Data.Text.pack "blah"
         a2 = Data.Text.pack "blah"

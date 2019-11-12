@@ -88,7 +88,7 @@ data Syn (k :: Kind) where
 deriving instance Eq (Syn a)
 
 -- | Pattern for identifying a binary connective
-pattern Conn a b <- 
+pattern Bin a b <- 
     (
     (\case
     c :->: d -> Just (c,d)
@@ -109,6 +109,17 @@ pattern Op a <-
     _ -> Nothing
     ) 
     -> Just a
+    )
+
+-- | Pattern for matching universal or existential variables.
+pattern U v <- 
+    (
+    (\case
+    NoHat a -> Just a
+    Hat a -> Just a
+    _ -> Nothing
+    )
+    -> Just v
     )
 
 -- | Equalities =

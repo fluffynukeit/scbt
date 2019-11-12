@@ -13,14 +13,19 @@ infix 5 |-
 -- Tau ::: Kappa -- Index term/monotype is well-formed (Fig 17), no additional type declaration needed
 newtype Prop = Prop P  -- Proposition is well-formed (Fig 17)
 newtype Type = Type A -- Polytype is well-formed (Fig 17)
--- Note: [Gamma]A applying a context, as substitution, to a type is implemented in Context.hs
 
 -- Variants of Polytype is well-formed (Fig 17)
 data Ptype = Ptype A SmallP
 newtype Types = Types [Type]
 data Ptypes = Ptypes SmallP [Type]
 
-data Instantiate = Sym := (T ::: Kappa)
+-- Note: [Gamma]A applying a context, as substitution, to a type is implemented in Context.hs.
+
+newtype Ptrue = Ptrue P
+data (:=*=:) = T :=*=: (T ::: Kappa)
+infix 6 :=*=:
+
+data (:=) = Sym := (T ::: Kappa) -- Instantiate, Figure 23
 infix 6 :=
 
 data (:<=:) = E :<=: (A, SmallP) -- Algorithmic checking, Figure 14

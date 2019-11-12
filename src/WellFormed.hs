@@ -9,7 +9,7 @@ instance Turnstile (Tau ::: Kappa) Bool where
     -- (|-) gamma (TNoHat a ::: kappa) = True -- TODO:: VarSort
     -- (|-) gamma (THat ahat ::: kappa) = True -- TODO: SolvedVarSort
     gamma |- Unit ::: Star = True -- UnitSort
-    gamma |- Conn tau1 tau2 ::: Star = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star -- BinSort
+    gamma |- Bin tau1 tau2 ::: Star = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star -- BinSort
     gamma |- Zero ::: N = True -- ZeroSort
     gamma |- Succ t ::: N = gamma |- t ::: N -- SuccSort
 
@@ -20,7 +20,7 @@ instance Turnstile Type Bool where
     -- TODO: VarWF
     -- TODO: SolvedVarWF
     gamma |- Type Unit = True -- UnitWF
-    gamma |- Type (Conn a b) = gamma |- Type a && gamma |- Type b -- BinWF
+    gamma |- Type (Bin a b) = gamma |- Type a && gamma |- Type b -- BinWF
     gamma |- Type (Vec t a) = gamma |- t ::: N && gamma |- (Type a) -- VecWF
     gamma |- Type (V (alpha ::: kappa) a) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ForallWF
     gamma |- Type (E (alpha :::kappa) a) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ExistsWF
