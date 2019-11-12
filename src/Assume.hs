@@ -8,20 +8,20 @@ import Context
 import Prelude hiding ((/))
 
 -- Check proposition, Figure 18
-instance Assume P (Maybe Delta) where
+instance Assume P DeltaBot where
 
   -- ElimpropEq
   gamma / t1 :=: t2 = gamma / t1 :=*=: t2 ::: N
 
 
 -- Assume/eliminate equation, Figure 21
-instance Assume (:=*=:) (Maybe Delta) where
+instance Assume (:=*=:) DeltaBot where
 
   -- ElimeqUvarRefl
-  gamma / NoHat a :=*=: NoHat a' ::: k = Just gamma
+  gamma / NoHat a :=*=: NoHat a' ::: k = pure gamma
 
   -- ElimeqZero
-  gamma / Zero :=*=: Zero ::: N = Just gamma
+  gamma / Zero :=*=: Zero ::: N = pure gamma
 
   -- ElimeqSucc 
   gamma / Succ sigma :=*=: Succ tau ::: N = gamma / sigma :=*=: tau ::: N
@@ -29,7 +29,7 @@ instance Assume (:=*=:) (Maybe Delta) where
   -- TODO: UvarL, UvarR, UvarLBottom
 
   -- ElimeqUnit
-  gamma / Unit :=*=: Unit ::: Star = Just gamma
+  gamma / Unit :=*=: Unit ::: Star = pure gamma
 
   -- ElimeqBin and ElimeqBinBot.  BinBot rule is to return Bottom (Nothing) if theta is Nothing
   gamma / Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do

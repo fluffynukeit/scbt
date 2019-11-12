@@ -2,9 +2,20 @@ module Syntax where
 
 import Data.Text (Text)
 import Data.Sequence (Seq)
+import Unbound.Generics.LocallyNameless hiding (Alpha)
+import Control.Monad.Trans.Maybe (MaybeT)
 
--- | Type alias for variable symbols
-type Sym = Text
+-- | Type tags for variable symbols
+data TVar = TVar
+data Var = Var
+
+-- | Variable types
+type X = Name Var
+type RecX = Rec Var
+type Alpha = Name TVar
+type Beta = Alpha
+
+type a :.: b = Bind a b
 
 -- | = Declarative syntax from Figure 2 =
 
@@ -18,10 +29,10 @@ type V = DecSyn Val
 -- | Declarative syntax of expressions and values
 data DecSyn (k :: EKind) where
     -- | Common syntax between expression and values:
-    X :: Sym -> DecSyn k
+    X :: X -> DecSyn k
     Un :: DecSyn k
-    Lam :: Sym -> E -> DecSyn k
-    Rec :: Sym -> V -> DecSyn k
+    Lam :: X :.: E -> DecSyn k
+    Rec :: RecX :.: V -> DecSyn k
     Ann :: DecSyn k ::: A -> DecSyn k
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
     Inj :: Inj -> DecSyn k -> DecSyn k
@@ -71,12 +82,12 @@ data Syn (k :: Kind) where
     (:->:) :: Syn k -> Syn k -> Syn k
     (:+:) :: Syn k -> Syn k -> Syn k
     (:*:) :: Syn k -> Syn k -> Syn k
-    NoHat :: Sym -> Syn k
-    Hat :: Sym -> Syn k
+    NoHat :: Alpha -> Syn k
+    Hat :: Alpha -> Syn k
 
     -- | Syntax for Types only
-    V :: Sym ::: Kappa -> A -> A
-    E :: Sym ::: Kappa -> A -> A
+    V :: Alpha ::: Kappa -> A -> A
+    E :: Alpha ::: Kappa -> A -> A
     (:>:) :: P -> A -> A
     (:/\:) :: A -> P -> A
     Vec :: Syn Tm -> A -> A
@@ -111,16 +122,17 @@ pattern Op a <-
     -> Just a
     )
 
--- | Pattern for matching universal or existential variables.
-pattern U v <- 
+-- | Pattern for matching either Hat or NoHat.
+pattern U u <-
     (
     (\case
     NoHat a -> Just a
     Hat a -> Just a
     _ -> Nothing
     )
-    -> Just v
+    -> Just u
     )
+    
 
 -- | Equalities =
 data (:=:) e f where
@@ -139,15 +151,16 @@ type P = T :=: T'
 
 -- | Contexts
 type Gamma = Seq Info
-type Delta = Gamma
+type Delta = FreshM Gamma
+type DeltaBot = MaybeT FreshM Gamma
 
 data Info where
-    Kappa :: Sym ::: Kappa -> Info
-    HatKappa :: Sym ::: Kappa -> Info
-    XAp :: Sym ::: A -> SmallP -> Info
-    Equals :: Sym :=: Tau -> Info
-    HatEquals :: (Sym ::: Kappa) :=: Tau -> Info
-    Mark :: Sym -> Info
+    Kappa :: Alpha ::: Kappa -> Info
+    HatKappa :: Alpha ::: Kappa -> Info
+    XAp :: X ::: A -> SmallP -> Info
+    Equals :: Alpha :=: Tau -> Info
+    HatEquals :: Alpha ::: Kappa :=: Tau -> Info
+    Mark :: Alpha -> Info
+    MarkHat :: Alpha -> Info
     deriving (Eq)
-
 

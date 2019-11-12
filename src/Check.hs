@@ -14,20 +14,20 @@ instance Turnstile Ptrue Delta where
 instance Turnstile (:=*=:) Delta where
 
   -- CheckeqVar
-  gamma |- U u :=*=: U u' ::: k | u == u' = gamma
+  gamma |- U u :=*=: U u' ::: k | u == u' = pure gamma
 
   -- CheckeqUnit
-  gamma |- Unit :=*=: Unit ::: Star = gamma
+  gamma |- Unit :=*=: Unit ::: Star = pure gamma
 
   -- CheckeqZero
-  gamma |- Zero :=*=: Zero ::: N = gamma
+  gamma |- Zero :=*=: Zero ::: N = pure gamma
 
   -- CheckeqSucc
   gamma |- Succ t1 :=*=: Succ t2 ::: N = gamma |- t1 :=*=: t1 ::: N
 
   -- CheckeqBin
-  gamma |- Bin t1 t2 :=*=: Bin t1' t2' ::: Star = 
-    let theta = gamma |- t1 :=*=: t1' ::: Star
-    in theta |- subst theta t2 :=*=: subst theta t2' ::: Star
+  gamma |- Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do
+    theta <- gamma |- t1 :=*=: t1' ::: Star
+    theta |- subst theta t2 :=*=: subst theta t2' ::: Star
 
   -- TODO: CheckeqInstL, CheckeqInstR

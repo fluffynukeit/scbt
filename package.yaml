@@ -40,6 +40,8 @@ library:
     - text
     - containers
     - split
+    - unbound-generics
+    - transformers
 
 executables:
   scbt-exe:

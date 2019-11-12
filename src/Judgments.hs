@@ -32,7 +32,7 @@ newtype Ptrue = Ptrue P -- Check proposition, (Fig 18)
 data (:=*=:) = T :=*=: (T ::: Kappa) -- Check equation, (Fig 19). Also assume/eliminate equation (Fig 21)
 infix 6 :=*=:
 
-data (:=) = Sym := (T ::: Kappa) -- Instantiate, Figure 23
+data (:=) = Alpha := (T ::: Kappa) -- Instantiate, Figure 23
 infix 6 :=
 
 data (:<=:) = E :<=: (A, SmallP) -- Algorithmic checking, Figure 14

@@ -1,9 +1,13 @@
-module Context where
+module Context 
+    ( module Context
+    , module Unbound.Generics.LocallyNameless.Fresh
+    ) where
 
 import Syntax
 import qualified Data.Sequence as S
 import Data.List.Split
 import Data.Foldable
+import Unbound.Generics.LocallyNameless.Fresh
 
 -- | Patterns for Gamma,Info commonly used in paper
 pattern Comma a b = (S.:|>) a b
