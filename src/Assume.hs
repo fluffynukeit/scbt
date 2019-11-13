@@ -7,6 +7,7 @@ import Judgments
 import Syntax
 import Context
 import Search
+import Head
 
 import Prelude hiding ((/))
 
@@ -50,4 +51,10 @@ instance Assume (:=*=:) DeltaBot where
   gamma / Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do
     theta <- gamma / t1 :=*=: t1' ::: Star
     theta / subst theta t2 :=*=: subst theta t2' ::: Star
+
+  -- ElimeqClash
+  gamma / sigma :=*=: tau ::: k = 
+    if sigma # tau 
+      then bottom 
+      else error "ElimeqClash else case" -- what to do here?
 
