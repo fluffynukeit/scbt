@@ -4,10 +4,11 @@ module Context
     ) where
 
 import Syntax
+import Search
 import qualified Data.Sequence as S
 import Data.List.Split
-import Data.Foldable
 import Unbound.Generics.LocallyNameless.Fresh
+import Control.Monad
 
 -- | Patterns for Gamma,Info commonly used in paper
 pattern Comma a b = (S.:|>) a b
@@ -37,30 +38,33 @@ unholes (is:iss) (g:gs) = g S.>< S.fromList is S.>< unholes iss gs
 (<@>) = flip holes
 (>@<) = flip unholes
 
+-- | Result for inconsistent context
+bottom :: DeltaBot
+bottom = mzero 
+
 -- | Implements Figure 12, applying a context to a Type
 class Subst a where
     subst :: Gamma -> a -> a
 
 -- | Substitution into terms/monoterms
 instance Subst Tau where
+
     subst gamma alpha@(NoHat sym) = 
-        -- we can't use hole notation here because we don't yet know tau.
-        -- Instead, we just have to search for a matching alpha
-        let result = find matchingSymbol gamma
-            matchingSymbol = \case
-                Equals (sym' :=: _) | sym == sym' -> True
-                _ -> False
+        let result = find (solution sym) gamma
         in case result of
             Just (Equals (_ :=: tau)) -> subst gamma tau
             Nothing -> alpha
+
     subst gamma alphaHat@(Hat sym) = 
-        let result = find matchingSymbol gamma
-            matchingSymbol = \case
-                HatEquals (sym' ::: kappa :=: tau) | sym == sym' -> True
-                _ -> False
+        let result = find (solution sym) gamma
         in case result of
             Just (HatEquals (sym ::: kappa :=: tau)) -> subst gamma tau
             Nothing -> alphaHat
+
+    -- Are these terms necessary or covered by Subst A?
+    subst gamma (a :->: b) = subst gamma a :->: subst gamma b
+    subst gamma (a :+: b) = subst gamma a :+: subst gamma b
+    subst gamma (a :*: b) = subst gamma a :*: subst gamma b
 
 -- | Substitution into predicates
 instance Subst P where

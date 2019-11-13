@@ -1,13 +1,16 @@
 -- | Implements assumption judgments in Figures 18, 21, and 22.
 module Assume where
 
+import Control.Monad
+
 import Judgments
 import Syntax
 import Context
+import Search
 
 import Prelude hiding ((/))
 
--- Check proposition, Figure 18
+-- Assume proposition, Figure 18
 instance Assume P DeltaBot where
 
   -- ElimpropEq
@@ -18,18 +21,30 @@ instance Assume P DeltaBot where
 instance Assume (:=*=:) DeltaBot where
 
   -- ElimeqUvarRefl
-  gamma / NoHat a :=*=: NoHat a' ::: k = pure gamma
+  gamma / NoHat a :=*=: NoHat a' ::: k | a == a' = return gamma
 
   -- ElimeqZero
-  gamma / Zero :=*=: Zero ::: N = pure gamma
+  gamma / Zero :=*=: Zero ::: N = return gamma
 
   -- ElimeqSucc 
   gamma / Succ sigma :=*=: Succ tau ::: N = gamma / sigma :=*=: tau ::: N
 
-  -- TODO: UvarL, UvarR, UvarLBottom
+  -- UvarLs
+  gamma / NoHat a :=*=: tau ::: k 
+    -- ElimeqUvarL
+    | not (a `elemFV` tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    -- ElimeqUvarLBot
+    | tau /= NoHat a && a `elemFV` tau = bottom
+
+  -- UvarRs
+  gamma / tau :=*=: NoHat a ::: k
+    -- ElimeqUvarR
+    | not (a `elemFV` tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    -- ElimeqUvarRBot
+    | tau /= NoHat a && a `elemFV` tau = bottom
 
   -- ElimeqUnit
-  gamma / Unit :=*=: Unit ::: Star = pure gamma
+  gamma / Unit :=*=: Unit ::: Star = return gamma
 
   -- ElimeqBin and ElimeqBinBot.  BinBot rule is to return Bottom (Nothing) if theta is Nothing
   gamma / Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do
