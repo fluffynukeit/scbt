@@ -43,41 +43,41 @@ bottom :: DeltaBot
 bottom = mzero 
 
 -- | Implements Figure 12, applying a context to a Type
-class Subst a where
-    subst :: Gamma -> a -> a
+class GamSub a where
+    gamsub :: Gamma -> a -> a
 
 -- | Substitution into terms/monoterms
-instance Subst Tau where
+instance GamSub Tau where
 
-    subst gamma alpha@(NoHat sym) = 
+    gamsub gamma alpha@(NoHat sym) = 
         let result = find (solution sym) gamma
         in case result of
-            Just (Equals (_ :=: tau)) -> subst gamma tau
+            Just (Equals (_ :=: tau)) -> gamsub gamma tau
             Nothing -> alpha
 
-    subst gamma alphaHat@(Hat sym) = 
+    gamsub gamma alphaHat@(Hat sym) = 
         let result = find (solution sym) gamma
         in case result of
-            Just (HatEquals (sym ::: kappa :=: tau)) -> subst gamma tau
+            Just (HatEquals (sym ::: kappa :=: tau)) -> gamsub gamma tau
             Nothing -> alphaHat
 
-    -- Are these terms necessary or covered by Subst A?
-    subst gamma (a :->: b) = subst gamma a :->: subst gamma b
-    subst gamma (a :+: b) = subst gamma a :+: subst gamma b
-    subst gamma (a :*: b) = subst gamma a :*: subst gamma b
+    -- Are these terms necessary or covered by GamSub A?
+    gamsub gamma (a :->: b) = gamsub gamma a :->: gamsub gamma b
+    gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
+    gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
 
 -- | Substitution into predicates
-instance Subst P where
-    subst gamma (t1 :=: t2) = subst gamma t1 :=: subst gamma t2
+instance GamSub P where
+    gamsub gamma (t1 :=: t2) = gamsub gamma t1 :=: gamsub gamma t2
 
 -- | Substituion into types
-instance Subst A where
-    subst gamma (p :>: a) = subst gamma p :>: subst gamma a
-    subst gamma (a :/\: p) = subst gamma a :/\: subst gamma p
-    subst gamma (a :->: b) = subst gamma a :->: subst gamma b
-    subst gamma (a :+: b) = subst gamma a :+: subst gamma b
-    subst gamma (a :*: b) = subst gamma a :*: subst gamma b
-    subst gamma (Vec t a) = Vec (subst gamma t) (subst gamma a)
-    subst gamma (V anno a) = V anno (subst gamma a)
-    subst gamma (E anno a) = E anno (subst gamma a)
+instance GamSub A where
+    gamsub gamma (p :>: a) = gamsub gamma p :>: gamsub gamma a
+    gamsub gamma (a :/\: p) = gamsub gamma a :/\: gamsub gamma p
+    gamsub gamma (a :->: b) = gamsub gamma a :->: gamsub gamma b
+    gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
+    gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
+    gamsub gamma (Vec t a) = Vec (gamsub gamma t) (gamsub gamma a)
+    gamsub gamma (V anno a) = V anno (gamsub gamma a)
+    gamsub gamma (E anno a) = E anno (gamsub gamma a)
 

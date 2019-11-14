@@ -50,7 +50,7 @@ instance Assume (:=*=:) DeltaBot where
   -- ElimeqBin and ElimeqBinBot.  BinBot rule is to return Bottom (Nothing) if theta is Nothing
   gamma / Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do
     theta <- gamma / t1 :=*=: t1' ::: Star
-    theta / subst theta t2 :=*=: subst theta t2' ::: Star
+    theta / gamsub theta t2 :=*=: gamsub theta t2' ::: Star
 
   -- ElimeqClash
   gamma / sigma :=*=: tau ::: k = 

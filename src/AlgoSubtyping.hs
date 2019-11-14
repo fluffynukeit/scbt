@@ -8,20 +8,25 @@ import Check
 import Search
 import Instantiate
 
-isV (V _ _) = True
-isV _ = False
+headV (V _ _) = True
+headV _ = False
 
-isE (E _ _) = True
-isE _ = False
+headE (E _ _) = True
+headE _ = False
 
 pol (V _ _) = Neg
 pol (E _ _) = Pos
 pol _ = None
 
+pos a = pol a == Pos
+neg a = pol a == Neg
 nonpos a = pol a /= Pos
 nonneg a = pol a /= Neg
 
-instance Turnstile (:<:+:) Delta where
+instance Turnstile (:<:?:) Delta where
+
+  -- <:VL
+  -- gamma |- V (al ::: k) a :<:-: b | not (headV b) = do
 
   -- <:EL
   gamma |- E (al ::: k) a :<:+: b = do
@@ -34,14 +39,14 @@ instance Turnstile (:<:+:) Delta where
     -- let new = gamma `Comma` Mark b `Comma` Kappa b ::: k
 
   -- <:Equiv, positive case
-  gamma |- a :<:+: b | not (isV a || isE a || isV b || isE b) = gamma |- a :===: b
+  gamma |- a :<:+: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
 
 instance Turnstile (P :===: Q) Delta where
 
   -- PropEq
   gamma |- (t1 :=: t1') :===: (t2 :=: t2') = do
     theta <- gamma |- t1 :=*=: t2 ::: N
-    delta <- theta |- subst theta t1' :=*=: subst theta t2' ::: N
+    delta <- theta |- gamsub theta t1' :=*=: gamsub theta t2' ::: N
     return delta
 
 
@@ -59,7 +64,7 @@ instance Turnstile (A :===: B) Delta where
   -- =Bin
   gamma |- Bin a1 a2 :===: Bin b1 b2 = do
     theta <- gamma |- a1 :===: b1
-    delta <- theta |- subst theta a1 :===: subst theta b2
+    delta <- theta |- gamsub theta a1 :===: gamsub theta b2
     return delta
 
   -- =Vec
@@ -67,7 +72,7 @@ instance Turnstile (A :===: B) Delta where
     -- I think the paper has a typo in that t1 === t2 should be a checking equation in Figure 19.
     -- There's no === judgment defined for terms, only types.
     theta <- gamma |- t1 :=*=: t2 ::: N
-    delta <- theta |- subst theta a1 :===: subst theta a2
+    delta <- theta |- gamsub theta a1 :===: gamsub theta a2
     return delta
 
   -- =V
@@ -85,13 +90,13 @@ instance Turnstile (A :===: B) Delta where
   -- =Implies
   gamma |- p :>: a :===: q :>: b = do
     theta <- gamma |- p :===: q
-    delta <- theta |- subst theta a :===: subst theta b
+    delta <- theta |- gamsub theta a :===: gamsub theta b
     return delta
 
   -- =With
   gamma |- a :/\: p :===: b :/\: q = do
     theta <- gamma |- p :===: q
-    delta <- theta |- subst theta a :===: subst theta b
+    delta <- theta |- gamsub theta a :===: gamsub theta b
     return delta
 
 instance Turnstile (T :===: Tau) Delta where

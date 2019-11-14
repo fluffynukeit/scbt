@@ -35,7 +35,7 @@ instance Turnstile (:=) Delta where
         , HatEquals $ a ::: Star :=: (Hat a1 `op` Hat a2)
         ]
       ] |- a1 := t1 ::: Star
-    theta |- a2 := (subst theta t2) ::: Star
+    theta |- a2 := (gamsub theta t2) ::: Star
 
   -- TODO: InstReach (what is "unsolved"?)
   {-gamma |- a := b ::: k | h@[_,_,gamR] <- gamma <@> [[HatKappa $ a ::: k], [HatKappa $ b ::: k]] =
