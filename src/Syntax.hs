@@ -55,16 +55,23 @@ data DecSyn (k :: EKind) where
     App :: E -> SPlus -> E
     Case :: E -> BigPi -> E
 
+-- | Injections
 data Inj = Inj1 | Inj2
+
+-- | Spines and non-empty spines
 type S = [E]
 data SPlus = SPlus E S
 
+-- | Branch lists
 data BigPi = BigPi
 
 --
 -- | Sorts: kappa
 data Kappa = Star | N
     deriving (Eq, Show, Generic)
+
+-- | Polarities, fancy P
+data Pol = Pos | Neg | None deriving (Eq)
 
 -- | Principalities: p
 data SmallP = Bang | Slash
@@ -161,6 +168,7 @@ infix 7 :::
 
 -- | Propositions
 type P = T :=: T'
+type Q = P
 
 -- | Contexts
 type Gamma = Seq Info

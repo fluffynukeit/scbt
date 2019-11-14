@@ -34,6 +34,16 @@ solution a _ = False
 solved :: Typeable a => Name a -> Gamma -> Bool
 solved a = isJust . find (solution a)
 
+-- | Determine whether an Info is an unsolved variable.
+problem :: Typeable a => Name a -> Info -> Bool
+problem a (Kappa (a' ::: _)) = AnyName a == AnyName a'
+problem a (HatKappa (a' ::: _)) = AnyName a == AnyName a'
+problem a _ = False
+
+-- | Determine whether a context contains the unsolved variable.
+unsolved :: Typeable a => Name a -> Gamma -> Bool
+unsolved a = isJust . find (problem a)
+
 -- A GADT cannot derive Generic, and we need a Generic instance
 -- for unbounded-generic to work. Note that I tried just unbounded,
 -- which uses template Haskell instead, but it gave kind errors on 

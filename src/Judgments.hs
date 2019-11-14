@@ -36,3 +36,9 @@ data (:=) = AlphaHat := (T ::: Kappa) -- Instantiate, Figure 23
 infix 6 :=
 
 data (:<=:) = E :<=: (A, SmallP) -- Algorithmic checking, Figure 14
+
+data (:<::) = A :<:: B -- Algorithmic subtyping, Figure 22.  (This used or only + and - variants?)
+data (:<:+:) = A :<:+: B -- Algorithmic subtyping, Figure 22
+data (:<:-:) = A :<:-: B -- Algorithmic subtyping, Figure 22
+data (:===:) a b = a :===: b -- Propositional and Type equivalance, Figure 22
+infix 6 :===:
