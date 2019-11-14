@@ -17,13 +17,6 @@ data Var
 type X = Name Var
 type RecX = Rec Var
 
--- | Universal type variables (no hat)
-type Alpha = Name Univ
-type Beta = Alpha
-
--- | Existential type variables (hat)
-type AlphaHat = Name Exis
-type BetaHat = AlphaHat
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
@@ -75,10 +68,14 @@ data Pol = Pos | Neg | None deriving (Eq)
 
 -- | Principalities: p
 data SmallP = Bang | Slash
-    deriving (Eq)
+    deriving (Eq, Show, Generic)
 
 
 -- | = Algorithmic syntax from Figure 11 =
+
+-- | (Mono)Type variables.  Paired with a Kappa for terms/monotypes.
+type Alpha k = Name (Syn k)
+type Beta k = Alpha k
 
 -- | Kind distinguishes between syntax that is valid for
 -- Types (Ty), Terms/Monotypes (Tm), or both
@@ -100,12 +97,12 @@ data Syn (k :: Kind) where
     (:->:) :: Syn k -> Syn k -> Syn k
     (:+:) :: Syn k -> Syn k -> Syn k
     (:*:) :: Syn k -> Syn k -> Syn k
-    NoHat :: Alpha -> Syn k
-    Hat :: AlphaHat -> Syn k
+    NoHat :: Alpha k-> Syn k
+    Hat :: Alpha k -> Syn k
 
     -- | Syntax for Types only
-    V :: Alpha ::: Kappa -> A -> A
-    E :: Alpha ::: Kappa -> A -> A
+    V :: Alpha Tm ::: Kappa -> A -> A
+    E :: Alpha Tm ::: Kappa -> A -> A
     (:>:) :: P -> A -> A
     (:/\:) :: A -> P -> A
     Vec :: T -> A -> A
@@ -114,10 +111,10 @@ data Syn (k :: Kind) where
     Zero :: T
     Succ :: T -> T
 
-
 deriving instance Eq (Syn a)
 deriving instance Typeable (Syn a)
 deriving instance Show (Syn a)
+
 
 -- | Pattern for identifying a binary connective
 pattern Bin a b <- 
@@ -147,8 +144,8 @@ pattern Op a <-
 pattern U u <- 
     (
     (\case
-    Hat a -> Just (AnyName a)
-    NoHat a -> Just (AnyName a)
+    Hat a -> Just a
+    NoHat a -> Just a
     _ -> Nothing
     )
     -> Just u
@@ -176,12 +173,11 @@ type Delta = FreshM Gamma
 type DeltaBot = MaybeT FreshM Gamma
 
 data Info where
-    Kappa :: Alpha ::: Kappa -> Info
-    HatKappa :: AlphaHat ::: Kappa -> Info
+    Kappa :: Alpha Tm ::: Kappa -> Info
+    HatKappa :: Alpha Tm ::: Kappa -> Info
     XAp :: X ::: A -> SmallP -> Info
-    Equals :: Alpha :=: Tau -> Info
-    HatEquals :: AlphaHat ::: Kappa :=: Tau -> Info
-    Mark :: Alpha -> Info
-    MarkHat :: AlphaHat -> Info
-    deriving (Eq)
+    Equals :: Alpha Tm :=: Tau -> Info
+    HatEquals :: Alpha Tm ::: Kappa :=: Tau -> Info
+    Mark :: Alpha Tm -> Info
+    deriving (Eq, Generic, Show)
 

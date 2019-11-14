@@ -3,45 +3,51 @@ module Search
   , module Data.Foldable
   ) where
 
-import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
+import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf, filtered)
 import Unbound.Generics.LocallyNameless
-import Data.Set as S
+import qualified Data.Set as S
 import Data.Typeable
 import Data.Maybe
 import Data.Foldable
+import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
+import qualified GHC.Generics as G ((:+:)(..), (:*:)(..), (:.:)(..))
+import qualified Data.Sequence ()
 
 import Syntax hiding (Alpha)
 import qualified Syntax as X (Alpha)
-import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
-import qualified GHC.Generics as G ((:+:)(..), (:*:)(..), (:.:)(..))
 
--- | Get the set of all free universals and existentials.
-elemFV :: (Alpha a, Typeable b) => Name b -> a -> Bool
-elemFV n t = AnyName n `elem` (S.fromList . toListOf fvAny $ t)
+-- | Determine if name is used in a term or type.
+elemFV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
+elemFV a tree = a `elem` (S.fromList . toListOf fv $ tree)
 
--- | Get the set of only existentials
-elemFEV :: Alpha a => Name Exis -> a -> Bool
-elemFEV a t = a `elem` (S.fromList . toListOf fv $ t)
+-- | Determine if name is used as an existential term or type.
+elemFEV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
+elemFEV a tree = a `elem` (S.fromList . toListOf (filtered isHat . fv) $ tree)
+  where 
+    isHat = \case
+      Hat _ -> True
+      _ -> False
+    
 
 -- | Determine whether an Info is a solution fact.
 -- Works for Univ and Exis variables.
-solution :: Typeable a => Name a -> Info -> Bool
-solution a (Equals (a' :=: _)) = AnyName a == AnyName a'
-solution a (HatEquals (a' ::: _ :=: _)) = AnyName a == AnyName a'
+solution :: X.Alpha Tm -> Info -> Bool
+solution a (Equals (a' :=: _)) = a == a'
+solution a (HatEquals (a' ::: _ :=: _)) = a == a'
 solution a _ = False
 
 -- | Determine whether a context contains a solution for the variable.
-solved :: Typeable a => Name a -> Gamma -> Bool
+solved :: X.Alpha Tm -> Gamma -> Bool
 solved a = isJust . find (solution a)
 
 -- | Determine whether an Info is an unsolved variable.
-problem :: Typeable a => Name a -> Info -> Bool
+problem :: X.Alpha Tm -> Info -> Bool
 problem a (Kappa (a' ::: _)) = AnyName a == AnyName a'
 problem a (HatKappa (a' ::: _)) = AnyName a == AnyName a'
 problem a _ = False
 
 -- | Determine whether a context contains the unsolved variable.
-unsolved :: Typeable a => Name a -> Gamma -> Bool
+unsolved :: X.Alpha Tm -> Gamma -> Bool
 unsolved a = isJust . find (problem a)
 
 -- A GADT cannot derive Generic, and we need a Generic instance
@@ -60,9 +66,9 @@ instance Generic T where
         G.:+:
         (Rec0 T G.:*: Rec0 T) -- :*:
         G.:+:
-        (Rec0 X.Alpha) -- NoHat
+        (Rec0 (X.Alpha Tm)) -- NoHat
         G.:+:
-        (Rec0 AlphaHat) -- Hat
+        (Rec0 (X.Alpha Tm)) -- Hat
         G.:+:
         U1 -- Zero
         G.:+:
@@ -96,13 +102,13 @@ instance Generic A where
         G.:+:
         (Rec0 A G.:*: Rec0 A) -- :*:
         G.:+:
-        (Rec0 X.Alpha) -- NoHat
+        (Rec0 (X.Alpha Ty)) -- NoHat
         G.:+:
-        (Rec0 AlphaHat) -- Hat
+        (Rec0 (X.Alpha Ty)) -- Hat
         G.:+:
-        (Rec0 (X.Alpha ::: Kappa) G.:*: Rec0 A) -- V
+        (Rec0 (X.Alpha Tm ::: Kappa) G.:*: Rec0 A) -- V
         G.:+:
-        (Rec0 (X.Alpha ::: Kappa) G.:*: Rec0 A) -- E
+        (Rec0 (X.Alpha Tm ::: Kappa) G.:*: Rec0 A) -- E
         G.:+:
         (Rec0 P G.:*: Rec0 A) -- :>:
         G.:+:
@@ -136,10 +142,6 @@ instance Generic A where
     to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a G.:*: K1 b))))))))))) = Vec a b
 
 instance Alpha T
-instance Alpha A
-instance Alpha Kappa
-instance Alpha (X.Alpha ::: Kappa)
-instance Alpha (T :=: T)
 
-
-
+-- | Variable substitution. J // K means replace variable K with J.
+(//) e nm = id -- subst nm e

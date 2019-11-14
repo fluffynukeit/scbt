@@ -33,6 +33,7 @@ default-extensions:
   - AllowAmbiguousTypes
   - TypeFamilies
   - DeriveGeneric
+  - FlexibleContexts
 
 dependencies:
 - base >= 4.7 && < 5

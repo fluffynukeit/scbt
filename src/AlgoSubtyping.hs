@@ -7,6 +7,7 @@ import Context
 import Check
 import Search
 import Instantiate
+import Unbound.Generics.LocallyNameless hiding (Alpha)
 
 headV (V _ _) = True
 headV _ = False
@@ -25,9 +26,6 @@ nonneg a = pol a /= Neg
 
 instance Turnstile (:<:?:) Delta where
 
-  -- <:VL
-  -- gamma |- V (al ::: k) a :<:-: b | not (headV b) = do
-
   -- <:EL
   gamma |- E (al ::: k) a :<:+: b = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :<:+: b
@@ -35,11 +33,15 @@ instance Turnstile (:<:?:) Delta where
     return delta
 
   -- <:ER
-  -- gamma |- a :<:+: V (be ::: k) b = 
-    -- let new = gamma `Comma` Mark b `Comma` Kappa b ::: k
+  gamma |- a :<:+: E (be ::: k) b = do
+    beHat <- fresh be
+    new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat // be) b
+    let [delta, theta] = new <@> [[Mark beHat]]
+    return delta
 
-  -- <:Equiv, positive case
+  -- <:Equiv, positive and negative cases
   gamma |- a :<:+: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
+  gamma |- a :<:-: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
 
 instance Turnstile (P :===: Q) Delta where
 
