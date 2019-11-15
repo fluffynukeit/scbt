@@ -78,6 +78,6 @@ instance GamSub A where
     gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
     gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
     gamsub gamma (Vec t a) = Vec (gamsub gamma t) (gamsub gamma a)
-    gamsub gamma (V anno a) = V anno (gamsub gamma a)
-    gamsub gamma (E anno a) = E anno (gamsub gamma a)
+    gamsub gamma (V (a ::: b :.: c)) = V $ a ::: b :.: (gamsub gamma c)
+    gamsub gamma (E (a ::: b :.: c)) = E $ a ::: b :.: (gamsub gamma c)
 

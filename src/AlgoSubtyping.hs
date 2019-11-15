@@ -9,14 +9,14 @@ import Search
 import Instantiate
 import Unbound.Generics.LocallyNameless hiding (Alpha)
 
-headV (V _ _) = True
+headV (V _) = True
 headV _ = False
 
-headE (E _ _) = True
+headE (E _) = True
 headE _ = False
 
-pol (V _ _) = Neg
-pol (E _ _) = Pos
+pol (V _) = Neg
+pol (E _) = Pos
 pol _ = None
 
 pos a = pol a == Pos
@@ -27,26 +27,26 @@ nonneg a = pol a /= Neg
 instance Turnstile (:<:?:) Delta where
 
   -- <:VL
-  gamma |- V (al ::: k) a :<:-: b | not (headV b) = do
+  gamma |- V (al ::: k :.: a) :<:-: b | not (headV b) = do
     alHat <- fresh al
     new <- gamma `Comma` Mark alHat `Comma` Kappa (alHat ::: k) |- (Hat alHat // al) a :<:-: b
     let [delta, theta] = new <@> [[Mark alHat]]
     return delta
 
   -- <:VR
-  gamma |- a :<:-: V (be ::: k) b = do
+  gamma |- a :<:-: V (be ::: k :.: b) = do
     new <- gamma `Comma` Kappa (be ::: k) |- a :<:-: b
     let [delta, theta] = new <@> [[Kappa (be ::: k)]]
     return delta
 
   -- <:EL
-  gamma |- E (al ::: k) a :<:+: b = do
+  gamma |- E (al ::: k :.: a) :<:+: b = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :<:+: b
     let [delta, theta] = new <@> [[Kappa (al ::: k)]]
     return delta
 
   -- <:ER
-  gamma |- a :<:+: E (be ::: k) b | not (headE a) = do
+  gamma |- a :<:+: E (be ::: k :.: b) | not (headE a) = do
     beHat <- fresh be
     new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat // be) b
     let [delta, theta] = new <@> [[Mark beHat]]
@@ -99,13 +99,13 @@ instance Turnstile (A :===: B) Delta where
     return delta
 
   -- =V
-  gamma |- V (al ::: k) a :===: V (al' ::: k') b | al == al' && k == k' = do
+  gamma |- V (al ::: k :.: a) :===: V (al' ::: k' :.: b) | al == al' && k == k' = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :===: b
     let [delta, delta'] = new <@> [[Kappa (al ::: k)]]
     return delta
 
   -- =E
-  gamma |- E (al ::: k) a :===: E (al' ::: k') b | al == al' && k == k' = do
+  gamma |- E (al ::: k :.: a) :===: E (al' ::: k' :.: b) | al == al' && k == k' = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :===: b
     let [delta, delta'] = new <@> [[Kappa (al ::: k)]]
     return delta

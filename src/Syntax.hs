@@ -3,23 +3,19 @@ module Syntax where
 import Data.Text (Text)
 import Data.Sequence (Seq)
 import Unbound.Generics.LocallyNameless hiding (Alpha)
+import Unbound.Generics.LocallyNameless.Bind (Bind(..))
 import Control.Monad.Trans.Maybe (MaybeT)
 
 import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
--- | Type tags for variable symbols
-data Univ
-data Exis
-data Var
-
--- | Variable types
-type X = Name Var
-type RecX = Rec Var
-
+-- | Variable types for expressions and values.
+type X a = Name (DecSyn a)
+type RecX a = Rec (DecSyn a)
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
+pattern a :.: b = B a b
 
 -- | = Declarative syntax from Figure 2 =
 
@@ -33,10 +29,10 @@ type V = DecSyn Val
 -- | Declarative syntax of expressions and values
 data DecSyn (k :: EKind) where
     -- | Common syntax between expression and values:
-    X :: X -> DecSyn k
+    X :: X k -> DecSyn k
     Un :: DecSyn k
-    Lam :: X :.: E -> DecSyn k
-    Rec :: RecX :.: V -> DecSyn k
+    Lam :: X k :.: E -> DecSyn k
+    Rec :: RecX k :.: V -> DecSyn k
     Ann :: DecSyn k ::: A -> DecSyn k
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
     Inj :: Inj -> DecSyn k -> DecSyn k
@@ -101,8 +97,8 @@ data Syn (k :: Kind) where
     Hat :: Alpha k -> Syn k
 
     -- | Syntax for Types only
-    V :: Alpha Tm ::: Kappa -> A -> A
-    E :: Alpha Tm ::: Kappa -> A -> A
+    V :: Alpha Tm ::: Kappa :.: A -> A
+    E :: Alpha Tm ::: Kappa :.: A -> A
     (:>:) :: P -> A -> A
     (:/\:) :: A -> P -> A
     Vec :: T -> A -> A
@@ -111,6 +107,7 @@ data Syn (k :: Kind) where
     Zero :: T
     Succ :: T -> T
 
+deriving instance Eq (Kappa :.: A)
 deriving instance Eq (Syn a)
 deriving instance Typeable (Syn a)
 deriving instance Show (Syn a)
@@ -175,7 +172,7 @@ type DeltaBot = MaybeT FreshM Gamma
 data Info where
     Kappa :: Alpha Tm ::: Kappa -> Info
     HatKappa :: Alpha Tm ::: Kappa -> Info
-    XAp :: X ::: A -> SmallP -> Info
+    XAp :: X Exp ::: A -> SmallP -> Info
     Equals :: Alpha Tm :=: Tau -> Info
     HatEquals :: Alpha Tm ::: Kappa :=: Tau -> Info
     Mark :: Alpha Tm -> Info

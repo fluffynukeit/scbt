@@ -5,6 +5,8 @@ module Check where
 import Judgments
 import Syntax
 import Context
+import Search
+import Instantiate
 
 instance Turnstile Ptrue Delta where
 
@@ -26,8 +28,20 @@ instance Turnstile (:=*=:) Delta where
   gamma |- Succ t1 :=*=: Succ t2 ::: N = gamma |- t1 :=*=: t1 ::: N
 
   -- CheckeqBin
-  gamma |- Bin t1 t2 :=*=: Bin t1' t2' ::: Star = do
-    theta <- gamma |- t1 :=*=: t1' ::: Star
-    theta |- gamsub theta t2 :=*=: gamsub theta t2' ::: Star
+  gamma |- Bin tau1 tau2 :=*=: Bin tau1' tau2' ::: Star = do
+    theta <- gamma |- tau1 :=*=: tau1' ::: Star
+    delta <- theta |- gamsub theta tau2 :=*=: gamsub theta tau2' ::: Star
+    return delta
 
-  -- TODO: CheckeqInstL, CheckeqInstR
+  -- CheckeqInstL
+  gamma |- Hat a :=*=: t ::: k 
+    | [_,_] <- gamma <@> [[HatKappa $ a ::: k]]
+    , not (a `elemFV` t)
+    = gamma |- a := t ::: k
+
+  -- CheckeqInstR
+  gamma |- t :=*=: Hat a ::: k 
+      | [_,_] <- gamma <@> [[HatKappa $ a ::: k]]
+      , not (a `elemFV` t)
+      = gamma |- a := t ::: k
+

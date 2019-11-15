@@ -22,8 +22,8 @@ instance Turnstile Type Bool where
     gamma |- Type Unit = True -- UnitWF
     gamma |- Type (Bin a b) = gamma |- Type a && gamma |- Type b -- BinWF
     gamma |- Type (Vec t a) = gamma |- t ::: N && gamma |- (Type a) -- VecWF
-    gamma |- Type (V (alpha ::: kappa) a) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ForallWF
-    gamma |- Type (E (alpha :::kappa) a) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ExistsWF
+    gamma |- Type (V (alpha ::: kappa :.: a)) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ForallWF
+    gamma |- Type (E (alpha ::: kappa :.: a)) = gamma `Comma` (Kappa (alpha ::: kappa)) |- Type a -- ExistsWF
     gamma |- Type (p :>: a) = gamma |- Prop p && gamma |- Type a -- ImpliesWF
     gamma |- Type (a :/\: p) = gamma |- Prop p && gamma |- Type a -- WithWF
 

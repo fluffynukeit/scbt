@@ -16,16 +16,19 @@ import qualified Data.Sequence ()
 import Syntax hiding (Alpha)
 import qualified Syntax as X (Alpha)
 
+-- | Variable substitution. J // K means replace variable K with J.
+(//) e nm = subst nm e
+
 -- | Determine if name is used in a term or type.
 elemFV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
 elemFV a tree = a `elem` (S.fromList . toListOf fv $ tree)
 
 -- | Determine if name is used as an existential term or type.
 elemFEV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
-elemFEV a tree = a `elem` (S.fromList . toListOf (filtered isHat . fv) $ tree)
+elemFEV a tree = a `elem` (S.fromList . toListOf (filtered (not . isUniv) . fv) $ tree)
   where 
-    isHat = \case
-      Hat _ -> True
+    isUniv = \case 
+      NoHat _ -> True
       _ -> False
     
 
@@ -106,9 +109,9 @@ instance Generic A where
         G.:+:
         (Rec0 (X.Alpha Ty)) -- Hat
         G.:+:
-        (Rec0 (X.Alpha Tm ::: Kappa) G.:*: Rec0 A) -- V
+        (Rec0 (X.Alpha Tm ::: Kappa :.: A)) -- V
         G.:+:
-        (Rec0 (X.Alpha Tm ::: Kappa) G.:*: Rec0 A) -- E
+        (Rec0 (X.Alpha Tm ::: Kappa :.: A)) -- E
         G.:+:
         (Rec0 P G.:*: Rec0 A) -- :>:
         G.:+:
@@ -123,8 +126,8 @@ instance Generic A where
     from (a :*: b)  = R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))
     from (NoHat a)  = R1 (R1 (R1 (R1 (L1 (K1 a)))))
     from (Hat a)    = R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))
-    from (V a b)    = R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))
-    from (E a b)    = R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))
+    from (V a)      = R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a)))))))
+    from (E a)      = R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))))
     from (a :>: b)  = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))))
     from (a :/\: b) = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))))
     from (Vec a b)  = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a G.:*: K1 b))))))))))
@@ -135,32 +138,35 @@ instance Generic A where
     to (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))) = a :*: b
     to (R1 (R1 (R1 (R1 (L1 (K1 a)))))) = NoHat a
     to (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))) = Hat a
-    to (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))) = V a b
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))) = E a b
+    to (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a)))))))) = V a
+    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))))) = E a
     to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))))) = a :>: b
     to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))))) = a :/\: b
     to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a G.:*: K1 b))))))))))) = Vec a b
 
+-- Not at all sure I did these instances correctly...
 instance Alpha T
+instance Alpha A
+instance Alpha (X.Alpha Tm ::: Kappa :.: A)
+instance Alpha P
+instance Alpha Kappa
 
 instance Subst A A where
   isvar (Hat a) = Just (SubstName a)
   isvar (NoHat a) = Just (SubstName a)
   isvar _ = Nothing
 
-instance Subst A (X.Alpha Tm ::: Kappa)
-instance Subst A Kappa
-instance Subst A P
-instance Subst A T
-instance Subst T (X.Alpha Tm ::: Kappa)
-instance Subst T Kappa
-instance Subst T A
-instance Subst T P
-
 instance Subst T T where
   isvar (Hat a) = Just (SubstName a)
   isvar (NoHat a) = Just (SubstName a)
   isvar _ = Nothing
 
--- | Variable substitution. J // K means replace variable K with J.
-(//) e nm = subst nm e
+instance Subst A (X.Alpha Tm ::: Kappa :.: A)
+instance Subst A Kappa
+instance Subst A P
+instance Subst A T
+instance Subst T A
+instance Subst T (X.Alpha Tm ::: Kappa :.: A)
+instance Subst T Kappa
+instance Subst T P
+
