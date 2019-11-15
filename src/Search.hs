@@ -143,5 +143,24 @@ instance Generic A where
 
 instance Alpha T
 
+instance Subst A A where
+  isvar (Hat a) = Just (SubstName a)
+  isvar (NoHat a) = Just (SubstName a)
+  isvar _ = Nothing
+
+instance Subst A (X.Alpha Tm ::: Kappa)
+instance Subst A Kappa
+instance Subst A P
+instance Subst A T
+instance Subst T (X.Alpha Tm ::: Kappa)
+instance Subst T Kappa
+instance Subst T A
+instance Subst T P
+
+instance Subst T T where
+  isvar (Hat a) = Just (SubstName a)
+  isvar (NoHat a) = Just (SubstName a)
+  isvar _ = Nothing
+
 -- | Variable substitution. J // K means replace variable K with J.
-(//) e nm = id -- subst nm e
+(//) e nm = subst nm e

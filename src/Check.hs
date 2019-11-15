@@ -1,5 +1,5 @@
--- | This module implements Check proposition and CHeck equation judgements
--- in Figures 18 and 19
+-- | This module implements Check proposition and Check equation judgements
+-- in Figures 18 and 19.
 module Check where
 
 import Judgments

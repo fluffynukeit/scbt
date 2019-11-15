@@ -26,6 +26,19 @@ nonneg a = pol a /= Neg
 
 instance Turnstile (:<:?:) Delta where
 
+  -- <:VL
+  gamma |- V (al ::: k) a :<:-: b | not (headV b) = do
+    alHat <- fresh al
+    new <- gamma `Comma` Mark alHat `Comma` Kappa (alHat ::: k) |- (Hat alHat // al) a :<:-: b
+    let [delta, theta] = new <@> [[Mark alHat]]
+    return delta
+
+  -- <:VR
+  gamma |- a :<:-: V (be ::: k) b = do
+    new <- gamma `Comma` Kappa (be ::: k) |- a :<:-: b
+    let [delta, theta] = new <@> [[Kappa (be ::: k)]]
+    return delta
+
   -- <:EL
   gamma |- E (al ::: k) a :<:+: b = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :<:+: b
@@ -33,11 +46,19 @@ instance Turnstile (:<:?:) Delta where
     return delta
 
   -- <:ER
-  gamma |- a :<:+: E (be ::: k) b = do
+  gamma |- a :<:+: E (be ::: k) b | not (headE a) = do
     beHat <- fresh be
     new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat // be) b
     let [delta, theta] = new <@> [[Mark beHat]]
     return delta
+
+  gamma |- a :<:+: b 
+    | neg a && nonpos b = gamma |- a :<:-: b -- <:-+L
+    | nonpos a && neg b = gamma |- a :<:-: b -- <:-+R
+
+  gamma |- a :<:-: b
+    | pos a && nonneg b = gamma |- a :<:+: b -- <:+-L
+    | nonneg a && pos b = gamma |- a :<:+: b -- <:+-R
 
   -- <:Equiv, positive and negative cases
   gamma |- a :<:+: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
