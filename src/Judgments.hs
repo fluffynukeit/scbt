@@ -35,7 +35,8 @@ infix 6 :=*=:
 data (:=) = Alpha Tm := (T ::: Kappa) -- Instantiate, Figure 23
 infix 6 :=
 
-data (:<=:) = E :<=: (A, SmallP) -- Algorithmic checking, Figure 14
+data (:<=:) = EV :<=: (A, SmallP) -- Algorithmic checking, Figure 14a
+data (:=>:) = (:=>:) EV -- Algorithmic synthesis, Figure 14a
 
 data (:<:?:) = A :<:+: B | A :<:-: B -- Algorithmic subtyping, Figure 22
 data (:===:) a b = a :===: b -- Propositional and Type equivalance, Figure 22

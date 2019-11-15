@@ -1,5 +1,6 @@
 -- | This module implements Check proposition and Check equation judgements
 -- in Figures 18 and 19.
+-- Also checked introduction form for expressions in Figure 5
 module Check where
 
 import Judgments
@@ -45,3 +46,11 @@ instance Turnstile (:=*=:) Delta where
       , not (a `elemFV` t)
       = gamma |- a := t ::: k
 
+chkI :: EV -> Bool
+chkI (Lam _) = True
+chkI Un = True
+chkI (Pair _ _) = True
+chkI (Inj1 _) = True
+chkI (Inj2 _) = True
+chkI (_ :::: _) = True
+chkI _ = error "chkI"

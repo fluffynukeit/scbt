@@ -45,13 +45,18 @@ solved a = isJust . find (solution a)
 
 -- | Determine whether an Info is an unsolved variable.
 problem :: X.Alpha Tm -> Info -> Bool
-problem a (Kappa (a' ::: _)) = AnyName a == AnyName a'
-problem a (HatKappa (a' ::: _)) = AnyName a == AnyName a'
+problem a (Kappa (a' ::: _)) = a == a'
+problem a (HatKappa (a' ::: _)) = a == a'
 problem a _ = False
 
 -- | Determine whether a context contains the unsolved variable.
 unsolved :: X.Alpha Tm -> Gamma -> Bool
 unsolved a = isJust . find (problem a)
+
+-- | Predicate for finding an expression solution
+solutionX :: X -> Info -> Bool
+solutionX x (XAp (x' ::: _ ) _) = x == x'
+solutionX _ _ = False
 
 -- A GADT cannot derive Generic, and we need a Generic instance
 -- for unbounded-generic to work. Note that I tried just unbounded,

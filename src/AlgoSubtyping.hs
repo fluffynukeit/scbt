@@ -9,6 +9,7 @@ import Search
 import Instantiate
 import Unbound.Generics.LocallyNameless hiding (Alpha)
 
+-- | Polarity relations, Figure 4.
 headV (V _) = True
 headV _ = False
 
@@ -23,6 +24,14 @@ pos a = pol a == Pos
 neg a = pol a == Neg
 nonpos a = pol a /= Pos
 nonneg a = pol a /= Neg
+
+-- | Return the appropriate subtyping constructor based on input polarities.
+-- See Figure 4.
+join Pos _ = (:<:+:)
+join Neg _ = (:<:-:)
+join None Pos = (:<:+:)
+join None Neg = (:<:-:)
+join None None = (:<:-:)
 
 instance Turnstile (:<:?:) Delta where
 

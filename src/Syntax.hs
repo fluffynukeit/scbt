@@ -10,46 +10,46 @@ import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
 -- | Variable types for expressions and values.
-type X a = Name (DecSyn a)
-type RecX a = Rec (DecSyn a)
+type X = Name (DecSyn ExpVal)
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
 pattern a :.: b = B a b
+deriving instance (Eq a, Eq b) => Eq (a :.: b)
 
 -- | = Declarative syntax from Figure 2 =
 
 -- | EKind distinguishes syntax of expression and values
-data EKind = Exp | Val
-
--- | Convenience types for expressions and values.
-type E = DecSyn Exp
-type V = DecSyn Val
+data EKind = ExpOnly | ExpVal
+type EV = DecSyn ExpVal
+type EO = DecSyn ExpOnly
+-- An expression is either ExpVal or ExpOnly,
+-- so it has type DecSyn k to generally be either.
 
 -- | Declarative syntax of expressions and values
 data DecSyn (k :: EKind) where
     -- | Common syntax between expression and values:
-    X :: X k -> DecSyn k
-    Un :: DecSyn k
-    Lam :: X k :.: E -> DecSyn k
-    Rec :: RecX k :.: V -> DecSyn k
+    X :: X -> EV
+    Un :: EV
+    Lam :: X :.: DecSyn k -> EV
+    Rec :: X :.: EV -> EV
+    Nil :: EV
+
+    -- | Syntax that is invariant to expressions OR values
     Ann :: DecSyn k ::: A -> DecSyn k
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
-    Inj :: Inj -> DecSyn k -> DecSyn k
-    Nil :: DecSyn k
+    Inj1 :: DecSyn k -> DecSyn k
+    Inj2 :: DecSyn k -> DecSyn k
     (::::) :: DecSyn k -> DecSyn k -> DecSyn k
     -- TODO: add data kind to distinguish vector from non-vector
 
-    -- | Syntax for expressions only
-    App :: E -> SPlus -> E
-    Case :: E -> BigPi -> E
-
--- | Injections
-data Inj = Inj1 | Inj2
+    -- | Syntax for expressions only.
+    App :: DecSyn k -> SPlus (DecSyn k) -> EO
+    Case :: DecSyn k -> BigPi -> EO
 
 -- | Spines and non-empty spines
-type S = [E]
-data SPlus = SPlus E S
+type S a = [a]
+data SPlus a = SPlus a (S a)
 
 -- | Branch lists
 data BigPi = BigPi
@@ -93,7 +93,7 @@ data Syn (k :: Kind) where
     (:->:) :: Syn k -> Syn k -> Syn k
     (:+:) :: Syn k -> Syn k -> Syn k
     (:*:) :: Syn k -> Syn k -> Syn k
-    NoHat :: Alpha k-> Syn k
+    NoHat :: Alpha k -> Syn k
     Hat :: Alpha k -> Syn k
 
     -- | Syntax for Types only
@@ -107,7 +107,6 @@ data Syn (k :: Kind) where
     Zero :: T
     Succ :: T -> T
 
-deriving instance Eq (Kappa :.: A)
 deriving instance Eq (Syn a)
 deriving instance Typeable (Syn a)
 deriving instance Show (Syn a)
@@ -167,12 +166,13 @@ type Q = P
 -- | Contexts
 type Gamma = Seq Info
 type Delta = FreshM Gamma
+type ApDelta = FreshM (A, SmallP, Gamma)
 type DeltaBot = MaybeT FreshM Gamma
 
 data Info where
     Kappa :: Alpha Tm ::: Kappa -> Info
     HatKappa :: Alpha Tm ::: Kappa -> Info
-    XAp :: X Exp ::: A -> SmallP -> Info
+    XAp :: X ::: A -> SmallP -> Info
     Equals :: Alpha Tm :=: Tau -> Info
     HatEquals :: Alpha Tm ::: Kappa :=: Tau -> Info
     Mark :: Alpha Tm -> Info
