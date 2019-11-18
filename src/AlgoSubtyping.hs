@@ -134,9 +134,9 @@ instance Turnstile (A :===: B) Delta where
 instance Turnstile (T :===: Tau) Delta where
   
   -- =InstantiateL
-  gamma |- Hat a :===: tau | unsolved a gamma && not (a `elemFV` tau) =
+  gamma |- Hat a :===: tau | unsolved a gamma && not (a `elem` setFV tau) =
     gamma |- a := tau ::: Star
 
   -- =InstantiateR
-  gamma |- tau :===: Hat a | unsolved a gamma && not (a `elemFV` tau) =
+  gamma |- tau :===: Hat a | unsolved a gamma && not (a `elem` setFV tau) =
     gamma |- a := tau ::: Star

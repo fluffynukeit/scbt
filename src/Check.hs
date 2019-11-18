@@ -37,16 +37,16 @@ instance Turnstile (:=*=:) Delta where
   -- CheckeqInstL
   gamma |- Hat a :=*=: t ::: k 
     | [_,_] <- gamma <@> [[HatKappa $ a ::: k]]
-    , not (a `elemFV` t)
+    , not (a `elem` setFV t)
     = gamma |- a := t ::: k
 
   -- CheckeqInstR
   gamma |- t :=*=: Hat a ::: k 
       | [_,_] <- gamma <@> [[HatKappa $ a ::: k]]
-      , not (a `elemFV` t)
+      , not (a `elem` setFV t)
       = gamma |- a := t ::: k
 
-chkI :: EV -> Bool
+chkI :: DecSyn k -> Bool
 chkI (Lam _) = True
 chkI Un = True
 chkI (Pair _ _) = True

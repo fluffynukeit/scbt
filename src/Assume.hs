@@ -33,16 +33,16 @@ instance Assume (:=*=:) DeltaBot where
   -- UvarLs
   gamma / NoHat a :=*=: tau ::: k 
     -- ElimeqUvarL
-    | not (a `elemFV` tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    | not (a `elem` setFV tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
     -- ElimeqUvarLBot
-    | tau /= NoHat a && a `elemFV` tau = bottom
+    | tau /= NoHat a && a `elem` setFV tau = bottom
 
   -- UvarRs
   gamma / tau :=*=: NoHat a ::: k
     -- ElimeqUvarR
-    | not (a `elemFV` tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    | not (a `elem` setFV tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
     -- ElimeqUvarRBot
-    | tau /= NoHat a && a `elemFV` tau = bottom
+    | tau /= NoHat a && a `elem` setFV tau = bottom
 
   -- ElimeqUnit
   gamma / Unit :=*=: Unit ::: Star = return gamma

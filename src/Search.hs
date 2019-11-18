@@ -20,12 +20,12 @@ import qualified Syntax as X (Alpha)
 (//) e nm = subst nm e
 
 -- | Determine if name is used in a term or type.
-elemFV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
-elemFV a tree = a `elem` (S.fromList . toListOf fv $ tree)
+setFV :: Alpha (Syn a) => Syn a -> S.Set (X.Alpha Tm)
+setFV = S.fromList . toListOf fv 
 
 -- | Determine if name is used as an existential term or type.
-elemFEV :: Alpha (Syn a) => X.Alpha Tm -> (Syn a) -> Bool
-elemFEV a tree = a `elem` (S.fromList . toListOf (filtered (not . isUniv) . fv) $ tree)
+setFEV :: Alpha (Syn a) => Syn a -> S.Set (X.Alpha Tm)
+setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv) 
   where 
     isUniv = \case 
       NoHat _ -> True
@@ -57,6 +57,12 @@ unsolved a = isJust . find (problem a)
 solutionX :: X -> Info -> Bool
 solutionX x (XAp (x' ::: _ ) _) = x == x'
 solutionX _ _ = False
+
+-- | Predicate for finding an expression solution with specific type.
+solutionXA :: X -> A -> Info -> Bool
+solutionXA x a (XAp (x' ::: a') _) = x == x' && a == a'
+solutionXA _ _ _ = False
+
 
 -- A GADT cannot derive Generic, and we need a Generic instance
 -- for unbounded-generic to work. Note that I tried just unbounded,
@@ -110,9 +116,9 @@ instance Generic A where
         G.:+:
         (Rec0 A G.:*: Rec0 A) -- :*:
         G.:+:
-        (Rec0 (X.Alpha Ty)) -- NoHat
+        (Rec0 (X.Alpha Tm)) -- NoHat
         G.:+:
-        (Rec0 (X.Alpha Ty)) -- Hat
+        (Rec0 (X.Alpha Tm)) -- Hat
         G.:+:
         (Rec0 (X.Alpha Tm ::: Kappa :.: A)) -- V
         G.:+:
@@ -156,10 +162,7 @@ instance Alpha (X.Alpha Tm ::: Kappa :.: A)
 instance Alpha P
 instance Alpha Kappa
 
-instance Subst A A where
-  isvar (Hat a) = Just (SubstName a)
-  isvar (NoHat a) = Just (SubstName a)
-  isvar _ = Nothing
+instance Subst A A
 
 instance Subst T T where
   isvar (Hat a) = Just (SubstName a)

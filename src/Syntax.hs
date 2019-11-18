@@ -24,7 +24,7 @@ data EKind = ExpOnly | ExpVal
 type EV = DecSyn ExpVal
 type EO = DecSyn ExpOnly
 -- An expression is either ExpVal or ExpOnly,
--- so it has type DecSyn k to generally be either.
+-- so it has type DecSyn j to generally be either.
 
 -- | Declarative syntax of expressions and values
 data DecSyn (k :: EKind) where
@@ -44,12 +44,12 @@ data DecSyn (k :: EKind) where
     -- TODO: add data kind to distinguish vector from non-vector
 
     -- | Syntax for expressions only.
-    App :: DecSyn k -> SPlus (DecSyn k) -> EO
+    App :: DecSyn k -> SPlus k -> EO
     Case :: DecSyn k -> BigPi -> EO
 
 -- | Spines and non-empty spines
-type S a = [a]
-data SPlus a = SPlus a (S a)
+type S a = [DecSyn a]
+data SPlus a = SPlus (DecSyn a) (S a)
 
 -- | Branch lists
 data BigPi = BigPi
@@ -65,6 +65,7 @@ data Pol = Pos | Neg | None deriving (Eq)
 -- | Principalities: p
 data SmallP = Bang | Slash
     deriving (Eq, Show, Generic)
+type SmallQ = SmallP
 
 
 -- | = Algorithmic syntax from Figure 11 =
@@ -74,12 +75,13 @@ type Alpha k = Name (Syn k)
 type Beta k = Alpha k
 
 -- | Kind distinguishes between syntax that is valid for
--- Types (Ty), Terms/Monotypes (Tm), or both
+-- Types (Ty), Terms/Monotypes (Tm), or both.  
 data Kind = Ty | Tm
 
 -- | Convenience types for Types and Terms/Monoterms
 type A = Syn Ty
 type B = A
+type C = A
 
 type T = Syn Tm
 type Tau = T
@@ -93,8 +95,8 @@ data Syn (k :: Kind) where
     (:->:) :: Syn k -> Syn k -> Syn k
     (:+:) :: Syn k -> Syn k -> Syn k
     (:*:) :: Syn k -> Syn k -> Syn k
-    NoHat :: Alpha k -> Syn k
-    Hat :: Alpha k -> Syn k
+    NoHat :: Alpha Tm -> Syn k
+    Hat :: Alpha Tm -> Syn k
 
     -- | Syntax for Types only
     V :: Alpha Tm ::: Kappa :.: A -> A
@@ -167,7 +169,10 @@ type Q = P
 type Gamma = Seq Info
 type Delta = FreshM Gamma
 type ApDelta = FreshM (A, SmallP, Gamma)
-type DeltaBot = MaybeT FreshM Gamma
+type DeltaBot = FreshMT Maybe Gamma
+type CqDelta = ApDelta
+runDeltaBot :: DeltaBot -> Maybe Gamma
+runDeltaBot = runFreshMT
 
 data Info where
     Kappa :: Alpha Tm ::: Kappa -> Info
