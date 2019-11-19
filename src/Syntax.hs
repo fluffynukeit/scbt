@@ -58,7 +58,7 @@ data DecSyn (k :: EKind) where
     Inj1 :: DecSyn k -> DecSyn k
     Inj2 :: DecSyn k -> DecSyn k
     (::::) :: DecSyn k -> DecSyn k -> DecSyn k
-    -- TODO: add data kind to distinguish vector from non-vector
+    -- TODO: add data kind to distinguish vector from non-vector?
 
     -- | Syntax that is invariant to expressions OR values, but NOT patterns:
     Ann :: ExpOrVal k => DecSyn k ::: A -> DecSyn k

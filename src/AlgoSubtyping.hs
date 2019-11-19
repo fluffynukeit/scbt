@@ -114,10 +114,15 @@ instance Turnstile (A :===: B) Delta where
 
 instance Turnstile (T :===: Tau) Delta where
   
+-- NOTE: gamma[alphaHat] is not a well-formed expression because there is no
+-- possible context element that is just a variable without an accompanying
+-- sort, kappa.  Is there an implied sort then?  Or just ignore sort?  I proceed
+-- assuming the sort is ignored, which is the same as an "unsolved" query.
+--
   -- =InstantiateL
-  gamma |- Hat a :===: tau | unsolved a gamma && not (a `elem` setFV tau) =
+  gamma |- Hat a :===: tau | unsolved a gamma && a `notElem` setFV tau =
     gamma |- a := tau ::: Star
 
   -- =InstantiateR
-  gamma |- tau :===: Hat a | unsolved a gamma && not (a `elem` setFV tau) =
+  gamma |- tau :===: Hat a | unsolved a gamma && a `notElem` setFV tau =
     gamma |- a := tau ::: Star

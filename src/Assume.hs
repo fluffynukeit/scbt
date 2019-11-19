@@ -29,17 +29,17 @@ instance Assume (:=*=:) DeltaBot where
   -- ElimeqSucc 
   gamma // Succ sigma :=*=: Succ tau ::: N = gamma // sigma :=*=: tau ::: N
 
-  -- UvarLs
+  -- ElimeqUvarLs
   gamma // NoHat a :=*=: tau ::: k 
     -- ElimeqUvarL
-    | not (a `elem` setFV tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    | a `notElem` setFV tau && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
     -- ElimeqUvarLBot
     | tau /= NoHat a && a `elem` setFV tau = bottom
 
-  -- UvarRs
+  -- ElimeqUvarRs
   gamma // tau :=*=: NoHat a ::: k
     -- ElimeqUvarR
-    | not (a `elem` setFV tau) && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
+    | a `notElem` setFV tau && not (a `solved` gamma) = return $ gamma `Comma` (Equals $ a :=: tau)
     -- ElimeqUvarRBot
     | tau /= NoHat a && a `elem` setFV tau = bottom
 

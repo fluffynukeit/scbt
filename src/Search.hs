@@ -33,15 +33,22 @@ setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv)
     
 
 -- | Determine whether an Info is a solution fact.
--- Works for Univ and Exis variables.
 solution :: X.Alpha Tm -> Info -> Bool
 solution a (Equals (a' :=: _)) = a == a'
 solution a (HatEquals (a' ::: _ :=: _)) = a == a'
 solution a _ = False
 
+-- | Determine whether an Info is a solution fact with matching sort.
+solutionHat :: X.Alpha Tm -> Kappa -> Info -> Bool
+solutionHat a k (HatEquals (a' ::: k' :=: _)) = a == a' && k == k'
+solutionHat a k _ = False
+
 -- | Determine whether a context contains a solution for the variable.
 solved :: X.Alpha Tm -> Gamma -> Bool
 solved a = isJust . find (solution a)
+
+-- | Determine whether an existential is solved in the context.
+solvedHat a k = isJust . find (solutionHat a k)
 
 -- | Determine whether an Info is an unsolved variable.
 problem :: X.Alpha Tm -> Info -> Bool
@@ -57,6 +64,20 @@ unsolved a = isJust . find (problem a)
 solutionX :: X -> Info -> Bool
 solutionX x (XAp (x' ::: _ ) _) = x == x'
 solutionX _ _ = False
+
+-- | Determine if info contains a matching variable entry.
+var :: X.Alpha Tm -> Info -> Bool
+var a (Mark a') = a == a'
+var a b = problem a b || solution a b
+
+-- From Practical Foundations for Programming Languages SECOND EDITION:
+-- "We write x notelem dom(Γ) to say that there is no assumption in Γ of the form x:τ for any type τ"
+dom :: X.Alpha Tm -> Gamma -> Bool
+dom a = isJust . find (var a)
+
+domX :: X -> Gamma -> Bool
+domX x = isJust . find (solutionX x)
+
 
 -- A GADT cannot derive Generic, and we need a Generic instance
 -- for unbounded-generic to work. Note that I tried just unbounded,
