@@ -58,12 +58,6 @@ solutionX :: X -> Info -> Bool
 solutionX x (XAp (x' ::: _ ) _) = x == x'
 solutionX _ _ = False
 
--- | Predicate for finding an expression solution with specific type.
-solutionXA :: X -> A -> Info -> Bool
-solutionXA x a (XAp (x' ::: a') _) = x == x' && a == a'
-solutionXA _ _ _ = False
-
-
 -- A GADT cannot derive Generic, and we need a Generic instance
 -- for unbounded-generic to work. Note that I tried just unbounded,
 -- which uses template Haskell instead, but it gave kind errors on 

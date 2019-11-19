@@ -10,7 +10,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
 -- | Variable types for expressions and values.
-type X = Name (DecSyn ExpVal)
+type X = Name (DecSyn Pat)
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
@@ -18,41 +18,59 @@ pattern a :.: b = B a b
 deriving instance (Eq a, Eq b) => Eq (a :.: b)
 
 -- | = Declarative syntax from Figure 2 =
+-- Note: patterns don't have () listed in Figure 2 but they should.
+-- Also, Wild _ is not listed, but it should as well.
 
--- | EKind distinguishes syntax of expression and values
-data EKind = ExpOnly | ExpVal
-type EV = DecSyn ExpVal
-type EO = DecSyn ExpOnly
--- An expression is either ExpVal or ExpOnly,
--- so it has type DecSyn j to generally be either.
+-- | EKind distinguishes syntax of expressions, values
+-- and patterns. Each kind identifies the largest applicable
+-- set for the syntax.
+data EKind = Exp | Val | Pat
+type DP = DecSyn Pat
+type DV = DecSyn Val
+type DE = DecSyn Exp
+-- Any constructor requiring an input expression must accept
+-- inputs of DecSyn k to cover all subsets.
 
--- | Declarative syntax of expressions and values
+class ExpOrVal (k :: EKind)
+instance ExpOrVal ('Exp)
+instance ExpOrVal ('Val)
+
+-- | Declarative syntax of expressions, values, and patterns:
 data DecSyn (k :: EKind) where
-    -- | Common syntax between expression and values:
-    X :: X -> EV
-    Un :: EV
-    Lam :: X :.: DecSyn k -> EV
-    Rec :: X :.: EV -> EV
-    Nil :: EV
+    -- | Common syntax between expressions, values, and patterns:
+    X :: X -> DP
+    Nil :: DP
+    Un :: DP
 
-    -- | Syntax that is invariant to expressions OR values
-    Ann :: DecSyn k ::: A -> DecSyn k
+    -- | Common syntax between expressions and values, but not patterns:
+    Lam :: X :.: DecSyn k -> DV
+    Rec :: X :.: DV -> DV
+
+    -- | Syntax for expressions only.
+    App :: DecSyn k -> SPlus k -> DE
+    Case :: DecSyn k -> BigPi -> DE
+
+    -- | Syntax for patterns only.
+    Wild :: DP
+
+    -- | Syntax that is invariant to expressions or values or patterns:
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
     Inj1 :: DecSyn k -> DecSyn k
     Inj2 :: DecSyn k -> DecSyn k
     (::::) :: DecSyn k -> DecSyn k -> DecSyn k
     -- TODO: add data kind to distinguish vector from non-vector
 
-    -- | Syntax for expressions only.
-    App :: DecSyn k -> SPlus k -> EO
-    Case :: DecSyn k -> BigPi -> EO
+    -- | Syntax that is invariant to expressions OR values, but NOT patterns:
+    Ann :: ExpOrVal k => DecSyn k ::: A -> DecSyn k
 
 -- | Spines and non-empty spines
 type S a = [DecSyn a]
 data SPlus a = SPlus (DecSyn a) (S a)
 
--- | Branch lists
-data BigPi = BigPi
+-- | Branches and branch lists
+data SmallPi = [DP] :=> DE
+type BigPi = [SmallPi]
+pattern a :|: b = (a:b)
 
 --
 -- | Sorts: kappa

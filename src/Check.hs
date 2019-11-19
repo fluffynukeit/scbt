@@ -31,8 +31,7 @@ instance Turnstile (:=*=:) Delta where
   -- CheckeqBin
   gamma |- Bin tau1 tau2 :=*=: Bin tau1' tau2' ::: Star = do
     theta <- gamma |- tau1 :=*=: tau1' ::: Star
-    delta <- theta |- gamsub theta tau2 :=*=: gamsub theta tau2' ::: Star
-    return delta
+    theta |- gamsub theta tau2 :=*=: gamsub theta tau2' ::: Star
 
   -- CheckeqInstL
   gamma |- Hat a :=*=: t ::: k 

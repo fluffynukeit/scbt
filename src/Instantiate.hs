@@ -18,8 +18,7 @@ instance Turnstile (:=) Delta where
   -- InstSucc
   gamma |- a := Succ t1 ::: N | h@[_,_] <- gamma <@> [[HatKappa $ a ::: N]] = do
     a1 <- fresh a
-    delta <- h >@< [[HatKappa $ a1 ::: N, HatEquals $ a ::: N :=: Succ (Hat a1)]] |- a1 := t1 ::: N 
-    return delta
+    h >@< [[HatKappa $ a1 ::: N, HatEquals $ a ::: N :=: Succ (Hat a1)]] |- a1 := t1 ::: N 
 
   -- InstBin
   gamma |- a := b@(Bin tau1 tau2) ::: Star | h@[_,_] <- gamma <@> [[HatKappa $ a ::: Star]]= do
@@ -33,8 +32,7 @@ instance Turnstile (:=) Delta where
         , HatEquals $ a ::: Star :=: (Hat a1 `op` Hat a2)
         ]
       ] |- a1 := tau1 ::: Star
-    delta <- theta |- a2 := (gamsub theta tau2) ::: Star
-    return delta
+    theta |- a2 := (gamsub theta tau2) ::: Star
 
   -- InstReach
   gamma |- a := (Hat b) ::: k 

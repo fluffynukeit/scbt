@@ -78,8 +78,7 @@ instance Turnstile (P :===: Q) Delta where
   -- PropEq
   gamma |- (t1 :=: t1') :===: (t2 :=: t2') = do
     theta <- gamma |- t1 :=*=: t2 ::: N
-    delta <- theta |- gamsub theta t1' :=*=: gamsub theta t2' ::: N
-    return delta
+    theta |- gamsub theta t1' :=*=: gamsub theta t2' ::: N
 
 
 instance Turnstile (A :===: B) Delta where
@@ -96,16 +95,14 @@ instance Turnstile (A :===: B) Delta where
   -- =Bin
   gamma |- Bin a1 a2 :===: Bin b1 b2 = do
     theta <- gamma |- a1 :===: b1
-    delta <- theta |- gamsub theta a1 :===: gamsub theta b2
-    return delta
+    theta |- gamsub theta a1 :===: gamsub theta b2
 
   -- =Vec
   gamma |- Vec t1 a1 :===: Vec t2 a2 = do
     -- I think the paper has a typo in that t1 === t2 should be a checking equation in Figure 19.
     -- There's no === judgment defined for terms, only types.
     theta <- gamma |- t1 :=*=: t2 ::: N
-    delta <- theta |- gamsub theta a1 :===: gamsub theta a2
-    return delta
+    theta |- gamsub theta a1 :===: gamsub theta a2
 
   -- =V
   gamma |- V (al ::: k :.: a) :===: V (al' ::: k' :.: b) | al == al' && k == k' = do
@@ -122,14 +119,12 @@ instance Turnstile (A :===: B) Delta where
   -- =Implies
   gamma |- p :>: a :===: q :>: b = do
     theta <- gamma |- p :===: q
-    delta <- theta |- gamsub theta a :===: gamsub theta b
-    return delta
+    theta |- gamsub theta a :===: gamsub theta b
 
   -- =With
   gamma |- a :/\: p :===: b :/\: q = do
     theta <- gamma |- p :===: q
-    delta <- theta |- gamsub theta a :===: gamsub theta b
-    return delta
+    theta |- gamsub theta a :===: gamsub theta b
 
 instance Turnstile (T :===: Tau) Delta where
   
