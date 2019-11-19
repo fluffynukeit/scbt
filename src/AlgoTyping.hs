@@ -64,12 +64,12 @@ instance Turnstile ((:<=:) (DecSyn k)) Delta where
   -- EI
   gamma |- e :<=: (E (al ::: k :.: a), p) | chkI e = do
     alHat <- fresh al
-    gamma `Comma` HatKappa (alHat ::: k) |- e :<=: ((Hat alHat // al) a, Slash) -- implied Slash?
+    gamma `Comma` HatKappa (alHat ::: k) |- e :<=: ((Hat alHat / al) a, Slash) -- implied Slash?
 
   -- ImpliesI and ImpliesIBot
   gamma |- v :<=: (p :>: a, Bang) | chkI v = do
     mark <- fresh $ s2n "Pmark"
-    let maybetheta = runDeltaBot $ (gamma `Comma` Mark mark) / p
+    let maybetheta = runDeltaBot $ (gamma `Comma` Mark mark) // p
     case maybetheta of
       Just theta -> do
         new <- theta |- v :<=: (gamsub theta a, Bang)
@@ -168,7 +168,7 @@ instance Turnstile ((:>>:) k) CqDelta where
   -- VSpine
   gamma |- (:>>:) ((e:s) ::: V (al ::: k :.: a), p) = do
     alHat <- fresh al
-    gamma `Comma` HatKappa (al ::: k) |- (((e:s) ::: (Hat alHat // al) a, Slash) :>>:) -- implied Slash?
+    gamma `Comma` HatKappa (al ::: k) |- (((e:s) ::: (Hat alHat / al) a, Slash) :>>:) -- implied Slash?
 
   -- ImpliesSpline
   gamma |- (:>>:) ((e:s) ::: p :>: a, smallp) = do

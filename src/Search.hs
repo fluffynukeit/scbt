@@ -16,8 +16,8 @@ import qualified Data.Sequence ()
 import Syntax hiding (Alpha)
 import qualified Syntax as X (Alpha)
 
--- | Variable substitution. J // K means replace variable K with J.
-(//) e nm = subst nm e
+-- | Variable substitution. J / K means replace variable K with J.
+(/) e nm = subst nm e
 
 -- | Determine if name is used in a term or type.
 setFV :: Alpha (Syn a) => Syn a -> S.Set (X.Alpha Tm)

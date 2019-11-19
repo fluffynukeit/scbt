@@ -9,10 +9,10 @@ class Turnstile a b where
     (|-) :: Gamma -> a -> b
 infix 4 |-
 
--- | An Assumption implements the / notation.
+-- | An Assumption implements the / notation (big slash).
 class Assume a b where
-    (/) :: Gamma -> a -> b
-infix 5 /
+    (//) :: Gamma -> a -> b
+infix 5 //
 
 
 -- | Algorithmic judgments from Appendix 2
@@ -45,5 +45,21 @@ data (:=>:) k = (:=>:) (DecSyn k) -- Algorithmic synthesis, Figure 14a
 data (:>>:) k = (:>>:) (S k ::: A, SmallP) -- Algorithmic spine typing, Figure 14a
 data (:>>?:) k = (:>>?:) (S k ::: A, SmallP) -- Algorithmic spine typing with principality recovery, Figure 14a
 
+
+-- | Polarity relations, Figure 4.
+headV (V _) = True
+headV _ = False
+
+headE (E _) = True
+headE _ = False
+
+pol (V _) = Neg
+pol (E _) = Pos
+pol _ = None
+
+pos a = pol a == Pos
+neg a = pol a == Neg
+nonpos a = pol a /= Pos
+nonneg a = pol a /= Neg
 
 

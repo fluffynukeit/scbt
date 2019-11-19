@@ -9,21 +9,7 @@ import Search
 import Instantiate
 import Unbound.Generics.LocallyNameless hiding (Alpha)
 
--- | Polarity relations, Figure 4.
-headV (V _) = True
-headV _ = False
-
-headE (E _) = True
-headE _ = False
-
-pol (V _) = Neg
-pol (E _) = Pos
-pol _ = None
-
-pos a = pol a == Pos
-neg a = pol a == Neg
-nonpos a = pol a /= Pos
-nonneg a = pol a /= Neg
+import Prelude hiding ((/))
 
 -- | Return the appropriate subtyping constructor based on input polarities.
 -- See Figure 4.
@@ -38,7 +24,7 @@ instance Turnstile (:<:?:) Delta where
   -- <:VL
   gamma |- V (al ::: k :.: a) :<:-: b | not (headV b) = do
     alHat <- fresh al
-    new <- gamma `Comma` Mark alHat `Comma` Kappa (alHat ::: k) |- (Hat alHat // al) a :<:-: b
+    new <- gamma `Comma` Mark alHat `Comma` Kappa (alHat ::: k) |- (Hat alHat / al) a :<:-: b
     let [delta, theta] = new <@> [[Mark alHat]]
     return delta
 
@@ -57,7 +43,7 @@ instance Turnstile (:<:?:) Delta where
   -- <:ER
   gamma |- a :<:+: E (be ::: k :.: b) | not (headE a) = do
     beHat <- fresh be
-    new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat // be) b
+    new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat / be) b
     let [delta, theta] = new <@> [[Mark beHat]]
     return delta
 
