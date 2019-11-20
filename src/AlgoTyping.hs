@@ -136,7 +136,7 @@ instance Turnstile ((:<=:) (DecSyn k)) Delta where
 
   -- Sub (last due to overlapping/redundant pattern match)
   gamma |- e :<=: (b,p) = do
-    (a, q :: SmallP, theta) <- gamma |- (e :=>:)
+    (a, q, theta) <- (gamma |- (e :=>:)) :: ApDelta
     let op = join (pol b) (pol a)
     theta |- a `op` b
 

@@ -1,7 +1,7 @@
 module Syntax where
 
 import Data.Text (Text)
-import Data.Sequence (Seq)
+import qualified Data.Sequence as S (Seq, Seq((:|>), Empty))
 import Unbound.Generics.LocallyNameless hiding (Alpha)
 import Unbound.Generics.LocallyNameless.Bind (Bind(..))
 import Control.Monad.Trans.Maybe (MaybeT)
@@ -28,8 +28,6 @@ data EKind = Exp | Val | Pat
 type DP = DecSyn Pat
 type DV = DecSyn Val
 type DE = DecSyn Exp
--- Any constructor requiring an input expression must accept
--- inputs of DecSyn k to cover all subsets.
 
 class ExpOrVal (k :: EKind)
 instance ExpOrVal ('Exp)
@@ -184,14 +182,21 @@ type P = T :=: T'
 type Q = P
 
 -- | Contexts
-type Gamma = Seq Info
+type Gamma = S.Seq Info
 type Delta = FreshM Gamma
+
+-- | Patterns for Gamma,Info commonly used in paper
+pattern Comma a b = (S.:|>) a b
+pattern Empty = S.Empty
+
+-- | Various judgment results and runners
 type ApDelta = FreshM (A, SmallP, Gamma)
 type DeltaBot = FreshMT Maybe Gamma
 type CoversResult = FreshM Bool
 type CqDelta = ApDelta
 runDeltaBot :: DeltaBot -> Maybe Gamma
 runDeltaBot = runFreshMT
+runApDelta = runFreshM
 
 data Info where
     Kappa :: Alpha Tm ::: Kappa -> Info

@@ -10,9 +10,6 @@ import Data.List.Split
 import Unbound.Generics.LocallyNameless.Fresh
 import Control.Monad
 
--- | Patterns for Gamma,Info commonly used in paper
-pattern Comma a b = (S.:|>) a b
-pattern Empty = S.Empty
 
 -- | Implementation of hole notation in section 5.2.
 --

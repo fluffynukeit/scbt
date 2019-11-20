@@ -35,7 +35,6 @@ default-extensions:
   - DeriveGeneric
   - FlexibleContexts
   - PostfixOperators
-  - ScopedTypeVariables
 
 dependencies:
 - base >= 4.7 && < 5
@@ -70,3 +69,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - scbt
+    - unbound-generics
