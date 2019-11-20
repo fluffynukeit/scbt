@@ -63,7 +63,7 @@ instance GamSub Tau where
     gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
     gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
 
--- | Substitution into predicates
+-- | Substitution into propositions
 instance GamSub P where
     gamsub gamma (t1 :=: t2) = gamsub gamma t1 :=: gamsub gamma t2
 

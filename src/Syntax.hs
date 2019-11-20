@@ -197,6 +197,7 @@ type CqDelta = ApDelta
 runDeltaBot :: DeltaBot -> Maybe Gamma
 runDeltaBot = runFreshMT
 runApDelta = runFreshM
+runDelta = runFreshM
 
 data Info where
     Kappa :: Alpha Tm ::: Kappa -> Info

@@ -70,3 +70,4 @@ tests:
     dependencies:
     - scbt
     - unbound-generics
+    - hspec
