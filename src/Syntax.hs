@@ -188,6 +188,7 @@ type Gamma = Seq Info
 type Delta = FreshM Gamma
 type ApDelta = FreshM (A, SmallP, Gamma)
 type DeltaBot = FreshMT Maybe Gamma
+type CoversResult = FreshM Bool
 type CqDelta = ApDelta
 runDeltaBot :: DeltaBot -> Maybe Gamma
 runDeltaBot = runFreshMT

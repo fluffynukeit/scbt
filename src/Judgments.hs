@@ -45,6 +45,8 @@ data (:=>:) k = (:=>:) (DecSyn k) -- Algorithmic synthesis, Figure 14a
 data (:>>:) k = (:>>:) (S k ::: A, SmallP) -- Algorithmic spine typing, Figure 14a
 data (:>>?:) k = (:>>?:) (S k ::: A, SmallP) -- Algorithmic spine typing with principality recovery, Figure 14a
 
+data Covers a = Covers a ([A], SmallQ) -- Algorithmic match coverage, Figure 25
+
 
 -- | Polarity relations, Figure 4.
 headV (V _) = True
