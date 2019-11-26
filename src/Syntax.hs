@@ -61,6 +61,22 @@ data DecSyn (k :: DKind) where
     -- | Syntax that is invariant to expressions OR values, but NOT patterns:
     Ann :: ExpOrVal k => DecSyn k ::: A -> DecSyn k
 
+-- | Match on Inj1 or Inj2
+pattern InjK k <- 
+  (
+  (\case
+  Inj1 a -> Just a
+  Inj2 a -> Just a
+  _ -> Nothing
+  )
+  -> Just k
+  )
+
+-- | Map Inj1/Inj2 to arguments 1 and 2
+ak (Inj1 _) a b = a
+ak (Inj2 _) a b = b
+
+
 -- | Spines and non-empty spines
 type S a = [DecSyn a]
 data SPlus a = SPlus (DecSyn a) (S a)
