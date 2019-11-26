@@ -55,13 +55,12 @@ instance Turnstile ((:<=:) (DecSyn k)) Delta where
   -- ImpliesI and ImpliesIBot
   gamma |- v :<=: (p :>: a, Bang) | chkI v = do
     mark <- fresh $ s2n "Pmark"
-    let maybetheta = runDeltaBot $ (gamma `Comma` Mark mark) // p
-    case maybetheta of
-      Just theta -> do
+    case runDeltaBot $ (gamma `Comma` Mark mark) // p of
+      Delta theta -> do
         new <- theta |- v :<=: (gamsub theta a, Bang)
         let [delta, delta'] = new <@> [[Mark mark]]
         return delta
-      Nothing -> return gamma
+      Bottom -> return gamma
 
   -- WithI
   gamma |- e :<=: (a :/\: p, smallp) | not (isCase e) = do
@@ -294,10 +293,9 @@ instance Turnstile ((:<=:) (P, SmallPi ::: [A], SmallQ)) Delta where -- paper sa
   gamma |- (sigma :=: tau, rho :=> e ::: as, Bang) :<=: (c, smallp) = do
     p <- fresh $ s2n "Pmark"
     let k = Star -- FIXME TODO where does k come from?!?
-    let mtheta = runDeltaBot $ gamma `Comma` Mark p // (sigma :=*=: tau ::: k)
-    case mtheta of
-      Nothing -> return gamma
-      Just theta -> do
+    case runDeltaBot $ gamma `Comma` Mark p // (sigma :=*=: tau ::: k) of
+      Bottom -> return gamma
+      Delta theta -> do
         new <- theta |- rho :=> e ::: (as, Bang) :<=: (c, smallp)
         let [delta, delta'] = new <@> [[Mark p]]
         return delta

@@ -37,7 +37,9 @@ unholes (is:iss) (g:gs) = g S.>< S.fromList is S.>< unholes iss gs
 
 -- | Result for inconsistent context
 bottom :: DeltaBot
-bottom = mzero 
+bottom = mzero
+pattern Bottom = Nothing
+pattern Delta a = Just a
 
 -- | Implements Figure 12, applying a context to a Type
 class GamSub a where
@@ -73,5 +75,4 @@ instance GamSub Syn where
 
     gamsub gamma Zero = error "Gamma substitution into Zero term not defined."
     gamsub gamma (Succ _) = error "Gamma substitution into Succ term not defined."
-
 

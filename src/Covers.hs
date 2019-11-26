@@ -141,5 +141,5 @@ instance Turnstile (Covers (P, BigPi)) CoversResult where
     let k = N -- TODO where does this kappa come from?
         q = Bang -- TODO where does this q come from?
     case runDeltaBot (gamma // (gamsub gamma t1 :=*=: gamsub gamma t2 ::: k)) of
-      Nothing -> return False -- CoversEqBot.  TODO Should this be false? Not sure how to read the rule
-      Just delta -> delta |- pi `Covers` (map (gamsub delta) as, q) -- TODO gamma substitution into pi??
+      Bottom -> return True -- CoversEqBot. "Coverage succeeds since there are no possible values of that type."
+      Delta delta -> delta |- pi `Covers` (map (gamsub delta) as, q) -- TODO gamma substitution into pi??
