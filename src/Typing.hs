@@ -83,13 +83,14 @@ instance Turnstile ((:<=:) (DecSyn k)) Delta where
     return delta
 
   -- Case
-  gamma |- Case e pi :<=: (c, p) = do
+  -- Note: this complicated pattern guard is here so that if coverage is not satisifed, then the 
+  -- Sub rule gets tried as a fallthrough.
+  gamma |- Case e pi :<=: (c, p) | (True, delta) <- runDelta $ do
     (a, q, theta) <- gamma |- (e :=>:)
     delta <- theta |- (pi ::: ([gamsub theta a], q)) :<=: (gamsub theta c, p)
     result <- delta |- pi `Covers` ([gamsub delta a], q)
-    if result 
-      then return delta
-      else error "Case rule failed pattern list coverage check." -- TODO what happens here?
+    return (result, delta)
+    = return delta
   
   -- PlusIK
   gamma |- i@(InjK e) :<=: (a1 :+: a2, p) = gamma |- e :<=: (ak i a1 a2, p)

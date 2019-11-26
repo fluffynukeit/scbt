@@ -52,8 +52,5 @@ instance Assume (:=*=:) DeltaBot where
     theta // gamsub theta t2 :=*=: gamsub theta t2' ::: Star
 
   -- ElimeqClash
-  gamma // sigma :=*=: tau ::: k = 
-    if sigma # tau 
-      then bottom 
-      else error "ElimeqClash else case" -- what to do here?
+  gamma // sigma :=*=: tau ::: k | sigma # tau = bottom
 
