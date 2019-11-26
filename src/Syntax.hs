@@ -21,20 +21,20 @@ deriving instance (Eq a, Eq b) => Eq (a :.: b)
 -- Note: patterns don't have () listed in Figure 2 but they should.
 -- Also, Wild _ is not listed, but it should as well.
 
--- | EKind distinguishes syntax of expressions, values
+-- | DKind distinguishes declarative syntax of expressions, values
 -- and patterns. Each kind identifies the largest applicable
 -- set for the syntax.
-data EKind = Exp | Val | Pat
+data DKind = Exp | Val | Pat
 type DP = DecSyn Pat
 type DV = DecSyn Val
 type DE = DecSyn Exp
 
-class ExpOrVal (k :: EKind)
+class ExpOrVal (k :: DKind)
 instance ExpOrVal ('Exp)
 instance ExpOrVal ('Val)
 
 -- | Declarative syntax of expressions, values, and patterns:
-data DecSyn (k :: EKind) where
+data DecSyn (k :: DKind) where
     -- | Common syntax between expressions, values, and patterns:
     X :: X -> DP
     Nil :: DP
@@ -90,9 +90,10 @@ type SmallQ = SmallP
 type Alpha k = Name (Syn k)
 type Beta k = Alpha k
 
--- | Kind distinguishes between syntax that is valid for
--- Types (Ty), Terms/Monotypes (Tm), or both.  
-data Kind = Ty | Tm
+-- | AKind distinguishes between syntax that is valid for
+-- Types (Ty), Terms/Monotypes (Tm), or both kinds of algorithmic
+-- syntax.
+data AKind = Ty | Tm
 
 -- | Convenience types for Types and Terms/Monoterms
 type A = Syn Ty
@@ -105,7 +106,7 @@ type Sigma = T
 type T' = T
 
 -- | Syntax of types and monotypes
-data Syn (k :: Kind) where
+data Syn (k :: AKind) where
     -- | Common syntax between Types and Terms/Monotypes
     Unit :: Syn k
     (:->:) :: Syn k -> Syn k -> Syn k
