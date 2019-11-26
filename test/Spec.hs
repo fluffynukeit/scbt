@@ -1,5 +1,5 @@
 import Syntax
-import AlgoTyping
+import Typing
 import Judgments
 import Unbound.Generics.LocallyNameless
 import Test.Hspec
@@ -25,10 +25,12 @@ main = hspec $ do
             inferS (gamma `Comma` (HatEquals $ alHat ::: Star :=: Unit)) ([] ::: Unit, Slash) `shouldBe` (Unit, Slash)
         it "infers arrow spine (ArrowSpine)" $ do
             inferS (gamma `Comma` (HatKappa $ alHat ::: Star)) ([Un] ::: Hat alHat :->: Hat alHat, Slash) `shouldBe` (Unit, Slash)
+        it "infers forall spine (VSpine)" $ do
+            inferS gamma ([Un] ::: idSig, Bang) `shouldBe` (Unit, Slash)
+        it "recovers spine call principality (SpineRecover)" $ do
+            inferSRec gamma ([Un] ::: idSig, Bang) `shouldBe` (Unit, Bang)
         it "infers result type of id applied to Unit (ArrowE)" $ do
             infer gamma (call id $ with Un) `shouldBe` (Unit, Bang)
-        it "recovers spine call principality (SpinRecover)" $ do
-            inferSRec gamma ([Un] ::: idSig, Bang) `shouldBe` (Unit, Bang)
             
 
 id = X (s2n "id")

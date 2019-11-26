@@ -1,10 +1,10 @@
 -- | Algorithmic pattern matching, Figure 24.
-module AlgoMatch where
+module Match where
 
 import Judgments
 import Syntax
 import Context
-import AlgoTyping
+import Typing
 import Unbound.Generics.LocallyNameless.Name
 
 instance Turnstile ((:<=:) (BigPi ::: ([A], SmallQ))) Delta where

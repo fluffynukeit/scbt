@@ -1,9 +1,9 @@
 -- | THE BIG ONE.  Implements rules in Figure 14a.
-module AlgoTyping where
+module Typing where
 
 import Syntax
 import Judgments
-import AlgoSubtyping
+import Subtyping
 import Search
 import Context
 import Check
@@ -168,7 +168,7 @@ instance Turnstile ((:>>:) k) CqDelta where
   -- VSpine
   gamma |- (:>>:) ((e:s) ::: V (al ::: k :.: a), p) = do
     alHat <- fresh al
-    gamma `Comma` HatKappa (al ::: k) |- (((e:s) ::: (Hat alHat / al) a, Slash) :>>:) -- implied Slash?
+    gamma `Comma` HatKappa (alHat ::: k) |- (((e:s) ::: (Hat alHat / al) a, Slash) :>>:) -- implied Slash?
 
   -- ImpliesSpline
   gamma |- (:>>:) ((e:s) ::: p :>: a, smallp) = do

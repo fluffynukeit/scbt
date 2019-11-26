@@ -36,7 +36,7 @@ data (:<:?:) = A :<:+: B | A :<:-: B -- Algorithmic subtyping, Figure 22
 data (:===:) a b = a :===: b -- Propositional and Type equivalance, Figure 22
 infix 6 :===:
 
-data (:=) = Alpha Tm := (T ::: Kappa) -- Instantiate, Figure 23
+data (:=) = Alpha := (T ::: Kappa) -- Instantiate, Figure 23
 infix 6 :=
 
 data (:<=:) k = k :<=: (A, SmallP) -- Algorithmic checking, Figure 14a. Also pattern branch checking, Figure 24.

@@ -20,11 +20,11 @@ import qualified Syntax as X (Alpha)
 (/) e nm = subst nm e
 
 -- | Determine if name is used in a term or type.
-setFV :: Alpha (Syn a) => Syn a -> S.Set (X.Alpha Tm)
+setFV :: Alpha Syn => Syn -> S.Set (X.Alpha)
 setFV = S.fromList . toListOf fv 
 
 -- | Determine if name is used as an existential term or type.
-setFEV :: Alpha (Syn a) => Syn a -> S.Set (X.Alpha Tm)
+setFEV :: Alpha Syn => Syn -> S.Set (X.Alpha)
 setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv) 
   where 
     isUniv = \case 
@@ -33,31 +33,31 @@ setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv)
     
 
 -- | Determine whether an Info is a solution fact.
-solution :: X.Alpha Tm -> Info -> Bool
+solution :: X.Alpha -> Info -> Bool
 solution a (Equals (a' :=: _)) = a == a'
 solution a (HatEquals (a' ::: _ :=: _)) = a == a'
 solution a _ = False
 
 -- | Determine whether an Info is a solution fact with matching sort.
-solutionHat :: X.Alpha Tm -> Kappa -> Info -> Bool
+solutionHat :: X.Alpha -> Kappa -> Info -> Bool
 solutionHat a k (HatEquals (a' ::: k' :=: _)) = a == a' && k == k'
 solutionHat a k _ = False
 
 -- | Determine whether a context contains a solution for the variable.
-solved :: X.Alpha Tm -> Gamma -> Bool
+solved :: X.Alpha -> Gamma -> Bool
 solved a = isJust . find (solution a)
 
 -- | Determine whether an existential is solved in the context.
 solvedHat a k = isJust . find (solutionHat a k)
 
 -- | Determine whether an Info is an unsolved variable.
-problem :: X.Alpha Tm -> Info -> Bool
+problem :: X.Alpha -> Info -> Bool
 problem a (Kappa (a' ::: _)) = a == a'
 problem a (HatKappa (a' ::: _)) = a == a'
 problem a _ = False
 
 -- | Determine whether a context contains the unsolved variable.
-unsolved :: X.Alpha Tm -> Gamma -> Bool
+unsolved :: X.Alpha -> Gamma -> Bool
 unsolved a = isJust . find (problem a)
 
 -- | Predicate for finding an expression solution
@@ -66,130 +66,30 @@ solutionX x (XAp (x' ::: _ ) _) = x == x'
 solutionX _ _ = False
 
 -- | Determine if info contains a matching variable entry.
-var :: X.Alpha Tm -> Info -> Bool
+var :: X.Alpha -> Info -> Bool
 var a (Mark a') = a == a'
 var a b = problem a b || solution a b
 
 -- From Practical Foundations for Programming Languages SECOND EDITION:
 -- "We write x notelem dom(Γ) to say that there is no assumption in Γ of the form x:τ for any type τ"
-dom :: X.Alpha Tm -> Gamma -> Bool
+dom :: X.Alpha -> Gamma -> Bool
 dom a = isJust . find (var a)
 
 domX :: X -> Gamma -> Bool
 domX x = isJust . find (solutionX x)
 
-
--- A GADT cannot derive Generic, and we need a Generic instance
--- for unbounded-generic to work. Note that I tried just unbounded,
--- which uses template Haskell instead, but it gave kind errors on 
--- Syn (Kind is not star).
--- 
--- Given the needs, we'll do it manually. (ugh)
-instance Generic T where
-    type Rep T =
-        U1 -- Unit
-        G.:+:
-        (Rec0 T G.:*: Rec0 T) -- :->:
-        G.:+:
-        (Rec0 T G.:*: Rec0 T) -- :+:
-        G.:+:
-        (Rec0 T G.:*: Rec0 T) -- :*:
-        G.:+:
-        (Rec0 (X.Alpha Tm)) -- NoHat
-        G.:+:
-        (Rec0 (X.Alpha Tm)) -- Hat
-        G.:+:
-        U1 -- Zero
-        G.:+:
-        (Rec0 T) -- Succ
-
-    from Unit       = L1 U1
-    from (a :->: b) = R1 (L1 (K1 a G.:*: K1 b))
-    from (a :+: b)  = R1 (R1 (L1 (K1 a G.:*: K1 b)))
-    from (a :*: b)  = R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))
-    from (NoHat a)  = R1 (R1 (R1 (R1 (L1 (K1 a)))))
-    from (Hat a)    = R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))
-    from Zero       = R1 (R1 (R1 (R1 (R1 (R1 (L1 U1))))))
-    from (Succ a)   = R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a)))))))
-
-    to (L1 U1) = Unit
-    to (R1 (L1 (K1 a G.:*: K1 b))) = a :->: b
-    to (R1 (R1 (L1 (K1 a G.:*: K1 b)))) = a :+: b
-    to (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))) = a :*: b
-    to (R1 (R1 (R1 (R1 (L1 (K1 a)))))) = NoHat a
-    to (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))) = Hat a
-    to (R1 (R1 (R1 (R1 (R1 (R1 (L1 U1))))))) = Zero
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a)))))))) = Succ a
-
-instance Generic A where
-    type Rep A =
-        U1 -- Unit
-        G.:+:
-        (Rec0 A G.:*: Rec0 A) -- :->:
-        G.:+:
-        (Rec0 A G.:*: Rec0 A) -- :+:
-        G.:+:
-        (Rec0 A G.:*: Rec0 A) -- :*:
-        G.:+:
-        (Rec0 (X.Alpha Tm)) -- NoHat
-        G.:+:
-        (Rec0 (X.Alpha Tm)) -- Hat
-        G.:+:
-        (Rec0 (X.Alpha Tm ::: Kappa :.: A)) -- V
-        G.:+:
-        (Rec0 (X.Alpha Tm ::: Kappa :.: A)) -- E
-        G.:+:
-        (Rec0 P G.:*: Rec0 A) -- :>:
-        G.:+:
-        (Rec0 A G.:*: Rec0 P) -- :/\:
-        G.:+:
-        (Rec0 T G.:*: Rec0 A) -- Vec
-
-
-    from Unit       = L1 U1
-    from (a :->: b) = R1 (L1 (K1 a G.:*: K1 b))
-    from (a :+: b)  = R1 (R1 (L1 (K1 a G.:*: K1 b)))
-    from (a :*: b)  = R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))
-    from (NoHat a)  = R1 (R1 (R1 (R1 (L1 (K1 a)))))
-    from (Hat a)    = R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))
-    from (V a)      = R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a)))))))
-    from (E a)      = R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))))
-    from (a :>: b)  = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))))
-    from (a :/\: b) = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))))
-    from (Vec a b)  = R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a G.:*: K1 b))))))))))
-
-    to (L1 U1) = Unit
-    to (R1 (L1 (K1 a G.:*: K1 b))) = a :->: b
-    to (R1 (R1 (L1 (K1 a G.:*: K1 b)))) = a :+: b
-    to (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))) = a :*: b
-    to (R1 (R1 (R1 (R1 (L1 (K1 a)))))) = NoHat a
-    to (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))) = Hat a
-    to (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a)))))))) = V a
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a))))))))) = E a
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b)))))))))) = a :>: b
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (L1 (K1 a G.:*: K1 b))))))))))) = a :/\: b
-    to (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (R1 (K1 a G.:*: K1 b))))))))))) = Vec a b
-
 -- Not at all sure I did these instances correctly...
-instance Alpha T
-instance Alpha A
-instance Alpha (X.Alpha Tm ::: Kappa :.: A)
-instance Alpha P
+instance Alpha Syn
+instance Alpha (X.Alpha ::: Kappa :.: A)
 instance Alpha Kappa
+instance Alpha P
 
-instance Subst A A
-
-instance Subst T T where
-  isvar (Hat a) = Just (SubstName a)
+instance Subst Syn Syn where
   isvar (NoHat a) = Just (SubstName a)
+  isvar (Hat a) = Just (SubstName a)
   isvar _ = Nothing
 
-instance Subst A (X.Alpha Tm ::: Kappa :.: A)
-instance Subst A Kappa
-instance Subst A P
-instance Subst A T
-instance Subst T A
-instance Subst T (X.Alpha Tm ::: Kappa :.: A)
-instance Subst T Kappa
-instance Subst T P
+instance Subst Syn (X.Alpha ::: Kappa :.: A)
+instance Subst Syn Kappa
+instance Subst Syn P
 

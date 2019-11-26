@@ -43,8 +43,21 @@ bottom = mzero
 class GamSub a where
     gamsub :: Gamma -> a -> a
 
--- | Substitution into terms/monoterms
-instance GamSub Tau where
+-- | Substitution into propositions
+instance GamSub P where
+    gamsub gamma (t1 :=: t2) = gamsub gamma t1 :=: gamsub gamma t2
+
+-- | Substituion into types, terms, monotypes (algorithmic syntax)
+instance GamSub Syn where
+    gamsub gamma (p :>: a) = gamsub gamma p :>: gamsub gamma a
+    gamsub gamma (a :/\: p) = gamsub gamma a :/\: gamsub gamma p
+    gamsub gamma (a :->: b) = gamsub gamma a :->: gamsub gamma b
+    gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
+    gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
+    gamsub gamma (Vec t a) = Vec (gamsub gamma t) (gamsub gamma a)
+    gamsub gamma (V (a ::: b :.: c)) = V $ a ::: b :.: (gamsub gamma c)
+    gamsub gamma (E (a ::: b :.: c)) = E $ a ::: b :.: (gamsub gamma c)
+    gamsub gamma Unit = Unit
 
     gamsub gamma alpha@(NoHat sym) = 
         let result = find (solution sym) gamma
@@ -58,23 +71,7 @@ instance GamSub Tau where
             Just (HatEquals (sym ::: kappa :=: tau)) -> gamsub gamma tau
             Nothing -> alphaHat
 
-    -- Are these terms necessary or covered by GamSub A?
-    gamsub gamma (a :->: b) = gamsub gamma a :->: gamsub gamma b
-    gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
-    gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
+    gamsub gamma Zero = error "Gamma substitution into Zero term not defined."
+    gamsub gamma (Succ _) = error "Gamma substitution into Succ term not defined."
 
--- | Substitution into propositions
-instance GamSub P where
-    gamsub gamma (t1 :=: t2) = gamsub gamma t1 :=: gamsub gamma t2
-
--- | Substituion into types
-instance GamSub A where
-    gamsub gamma (p :>: a) = gamsub gamma p :>: gamsub gamma a
-    gamsub gamma (a :/\: p) = gamsub gamma a :/\: gamsub gamma p
-    gamsub gamma (a :->: b) = gamsub gamma a :->: gamsub gamma b
-    gamsub gamma (a :+: b) = gamsub gamma a :+: gamsub gamma b
-    gamsub gamma (a :*: b) = gamsub gamma a :*: gamsub gamma b
-    gamsub gamma (Vec t a) = Vec (gamsub gamma t) (gamsub gamma a)
-    gamsub gamma (V (a ::: b :.: c)) = V $ a ::: b :.: (gamsub gamma c)
-    gamsub gamma (E (a ::: b :.: c)) = E $ a ::: b :.: (gamsub gamma c)
 

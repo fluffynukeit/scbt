@@ -86,38 +86,49 @@ type SmallQ = SmallP
 
 -- | = Algorithmic syntax from Figure 11 =
 
--- | (Mono)Type variables.  Paired with a Kappa for terms/monotypes.
-type Alpha k = Name (Syn k)
-type Beta k = Alpha k
+-- NOTE: I originally used DataKinds to try to distinguish between
+-- terms/monotypes (t, tau, sigma) and types (A, B, C).  This turned
+-- out to be very messy for a variety of reasons:
+-- - Generic cannot be derived for a GADT, so Generic instance must 
+--      be manually defined
+-- - Unbound generics as well as Unbound (with TH) choke on 
+--      existential types, which is often the way to do subtyping
+-- - Require upcasting/downcasting (e.g. via Typeable)
+-- - OR require distinct Haskell types for terms/monoterms and types
+--      even though they share a syntax.
+-- So, for the time being, just dump all the algorithmic syntax into
+-- a single type and rely on proper usage manually to make things
+-- so much simpler.  Maybe in the I can figure out how TypeFamilies
+-- or something else to model the type promotion and demotion but
+-- keep a uniform syntax.
 
--- | AKind distinguishes between syntax that is valid for
--- Types (Ty), Terms/Monotypes (Tm), or both kinds of algorithmic
--- syntax.
-data AKind = Ty | Tm
+-- | (Mono)Type variables.  Paired with a Kappa for terms/monotypes.
+type Alpha = Name Syn
+type Beta = Alpha
 
 -- | Convenience types for Types and Terms/Monoterms
-type A = Syn Ty
+type A = Syn
 type B = A
 type C = A
 
-type T = Syn Tm
+type T = Syn
 type Tau = T
 type Sigma = T
 type T' = T
 
 -- | Syntax of types and monotypes
-data Syn (k :: AKind) where
+data Syn where
     -- | Common syntax between Types and Terms/Monotypes
-    Unit :: Syn k
-    (:->:) :: Syn k -> Syn k -> Syn k
-    (:+:) :: Syn k -> Syn k -> Syn k
-    (:*:) :: Syn k -> Syn k -> Syn k
-    NoHat :: Alpha Tm -> Syn k
-    Hat :: Alpha Tm -> Syn k
+    Unit :: Syn
+    (:->:) :: Syn -> Syn -> Syn
+    (:+:) :: Syn -> Syn -> Syn
+    (:*:) :: Syn -> Syn -> Syn
+    NoHat :: Alpha -> Syn
+    Hat :: Alpha -> Syn
 
     -- | Syntax for Types only
-    V :: Alpha Tm ::: Kappa :.: A -> A
-    E :: Alpha Tm ::: Kappa :.: A -> A
+    V :: Alpha ::: Kappa :.: A -> A
+    E :: Alpha ::: Kappa :.: A -> A
     (:>:) :: P -> A -> A
     (:/\:) :: A -> P -> A
     Vec :: T -> A -> A
@@ -125,11 +136,7 @@ data Syn (k :: AKind) where
     -- | Syntax for Terms only
     Zero :: T
     Succ :: T -> T
-
-deriving instance Eq (Syn a)
-deriving instance Typeable (Syn a)
-deriving instance Show (Syn a)
-
+    deriving (Eq, Typeable, Show, Generic)
 
 -- | Pattern for identifying a binary connective
 pattern Bin a b <- 
@@ -201,11 +208,11 @@ runApDelta = runFreshM
 runDelta = runFreshM
 
 data Info where
-    Kappa :: Alpha Tm ::: Kappa -> Info
-    HatKappa :: Alpha Tm ::: Kappa -> Info
+    Kappa :: Alpha ::: Kappa -> Info
+    HatKappa :: Alpha ::: Kappa -> Info
     XAp :: X ::: A -> SmallP -> Info
-    Equals :: Alpha Tm :=: Tau -> Info
-    HatEquals :: Alpha Tm ::: Kappa :=: Tau -> Info
-    Mark :: Alpha Tm -> Info
+    Equals :: Alpha :=: Tau -> Info
+    HatEquals :: Alpha ::: Kappa :=: Tau -> Info
+    Mark :: Alpha -> Info
     deriving (Eq, Generic, Show)
 
