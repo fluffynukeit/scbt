@@ -21,6 +21,12 @@ Direct PDF link (v2): https://arxiv.org/pdf/1601.05106v2.pdf
 - Match the paper's mathematical notation as closely as is reasonable
 - Allow the library to be used as a viable type-checking and inference algorithm for new language implementations
 
+## Disclaimer
+
+While the eventual aim of this library is general-purpose use in language implementations, it is not yet ready
+for that kind of use.  The repo is a WIP with improvements to test coverage, packaging, and user-facing API 
+required before it can be a useful tool.
+
 ## Notational differences
 
 Some operators in the paper are implemented as Haskell constructors, which requires they begin with a `:`.  For

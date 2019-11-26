@@ -9,8 +9,6 @@ import qualified Data.Set as S
 import Data.Typeable
 import Data.Maybe
 import Data.Foldable
-import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
-import qualified GHC.Generics as G ((:+:)(..), (:*:)(..), (:.:)(..))
 import qualified Data.Sequence ()
 
 import Syntax hiding (Alpha)
