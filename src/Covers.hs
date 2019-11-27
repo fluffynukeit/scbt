@@ -4,15 +4,18 @@ module Covers where
 import Syntax
 import Judgments
 import Context
-import Assume
+import Assume()
 import Unbound.Generics.LocallyNameless
+import Prelude hiding (pi)
 
 -- | Pattern expansion, Figure 9.
 --
+xWild :: Pattern -> Bool
 xWild (X _) = True
 xWild (Wild) = True
 xWild _ = False
 
+unit :: Pattern -> Bool
 unit (Un) = True
 unit _ = False
 
@@ -68,17 +71,17 @@ unit _ = False
 
 -- | Guarded check, Pattern list pi contains a list pattern constructor at the head position
 guarded :: BigPi -> Bool
-guarded ((Nil:rhos) :=> e :|: pi) = True
-guarded (((rho :::: rho'):rhos) :=> e :|: pi) = True
-guarded ((Wild:rhos) :=> e :|: pi) = guarded pi
-guarded (((X _):rhos) :=> e :|: pi) = guarded pi
+guarded ((Nil:_rhos) :=> _e :|: _pi) = True
+guarded (((_rho :::: _rho'):_rhos) :=> _e :|: _pi) = True
+guarded ((Wild:_rhos) :=> _e :|: pi) = guarded pi
+guarded (((X _x):_rhos) :=> _e :|: pi) = guarded pi
 
 
 -- Under context gamma, patterns pi cover the types As
-instance Turnstile (Covers BigPi) CoversResult where
+instance Turnstile (Covers BigPi) (Judgment Bool) where
 
   -- CoversEmpty
-  gamma |- ([] :=> e :|: pi) `Covers` ([], q) = return True
+  _gamma |- ([] :=> _e :|: _pi) `Covers` ([], _q) = return True
 
   -- Covers1
   gamma |- pi `Covers` (Unit:as, q) = do
@@ -98,7 +101,7 @@ instance Turnstile (Covers BigPi) CoversResult where
     return $ a && b
 
   -- CoversE
-  gamma |- pi `Covers` (E (al ::: k :.: a):as, q) =
+  gamma |- pi `Covers` (E (al ::: k :.: _a):as, q) =
     gamma `Comma` Kappa (al ::: k) |- pi `Covers` (as, q)
 
   -- CoversWith
@@ -106,7 +109,7 @@ instance Turnstile (Covers BigPi) CoversResult where
     gamma |- (t1 :=: t2, pi) `Covers` (a0:as, Bang)
 
   -- CoversWithSlash (why is this rule's formatting so messed up in the paper?)
-  gamma |- pi `Covers` ((a0 :/\: (t1 :=: t2)):as, Slash) =
+  gamma |- pi `Covers` ((a0 :/\: (_t1 :=: _t2)):as, Slash) =
     gamma |- pi `Covers` (a0:as, Slash) -- implied Slash?
 
   -- CoversVec
@@ -119,7 +122,7 @@ instance Turnstile (Covers BigPi) CoversResult where
     return $ g && z && v
 
   -- CoversVecSlash
-  gamma |- pi `Covers` ((Vec t a):as, Slash) = do
+  gamma |- pi `Covers` ((Vec _t a):as, Slash) = do
     let (piL, piR) = (pi ~>::)
     n <- fresh $ s2n "n" -- I *think* this rule introduces a variable for n
     g <- return $ guarded pi
@@ -128,18 +131,18 @@ instance Turnstile (Covers BigPi) CoversResult where
     return $ g && z && v
 
   -- CoversVar (last for overlapping patterns fallthrough)
-  gamma |- pi `Covers` (a:as, q) =  do
+  gamma |- pi `Covers` (_a:as, q) =  do
     let pi' = (pi ~>~)
     gamma |- pi' `Covers` (as, q)
 
 
 -- Under context gamma, pattern pi cover the types As assumping P
-instance Turnstile (Covers (P, BigPi)) CoversResult where
+instance Turnstile (Covers (P, BigPi)) (Judgment Bool) where
 
   -- CoversEq and CoversEqBot
   gamma |- (t1 :=: t2, pi) `Covers` (as, Bang) = do
     let k = N -- TODO where does this kappa come from?
         q = Bang -- TODO where does this q come from?
-    case runDeltaBot (gamma // (gamsub gamma t1 :=*=: gamsub gamma t2 ::: k)) of
+    case runJudgment (gamma // (gamsub gamma t1 :=*=: gamsub gamma t2 ::: k)) of
       Bottom -> return True -- CoversEqBot. "Coverage succeeds since there are no possible values of that type."
       Delta delta -> delta |- pi `Covers` (map (gamsub delta) as, q) -- TODO gamma substitution into pi??

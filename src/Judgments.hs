@@ -49,19 +49,29 @@ data Covers a = Covers a ([A], SmallQ) -- Algorithmic match coverage, Figure 25
 
 
 -- | Polarity relations, Figure 4.
+headV :: Syn -> Bool
 headV (V _) = True
 headV _ = False
 
+headE :: Syn -> Bool
 headE (E _) = True
 headE _ = False
 
+pol :: Syn -> Pol
 pol (V _) = Neg
 pol (E _) = Pos
 pol _ = None
 
+pos :: Syn -> Bool
 pos a = pol a == Pos
+
+neg :: Syn -> Bool
 neg a = pol a == Neg
+
+nonpos :: Syn -> Bool
 nonpos a = pol a /= Pos
+
+nonneg :: Syn -> Bool
 nonneg a = pol a /= Neg
 
 

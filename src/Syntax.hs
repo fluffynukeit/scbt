@@ -1,19 +1,18 @@
 module Syntax where
 
-import Data.Text (Text)
 import qualified Data.Sequence as S (Seq, Seq((:|>), Empty))
 import Unbound.Generics.LocallyNameless hiding (Alpha)
 import Unbound.Generics.LocallyNameless.Bind (Bind(..))
-import Control.Monad.Trans.Maybe (MaybeT)
 
 import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
 -- | Variable types for expressions and values.
-type X = Name (DecSyn Pat)
+type X = Name (DecSyn 'Pat)
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
+pattern (:.:) :: a -> b -> Bind a b
 pattern a :.: b = B a b
 deriving instance (Eq a, Eq b) => Eq (a :.: b)
 
@@ -25,9 +24,9 @@ deriving instance (Eq a, Eq b) => Eq (a :.: b)
 -- and patterns. Each kind identifies the largest applicable
 -- set for the syntax.
 data DKind = Exp | Val | Pat
-type DP = DecSyn Pat
-type DV = DecSyn Val
-type DE = DecSyn Exp
+type Pattern = DecSyn 'Pat
+type DV = DecSyn 'Val
+type DE = DecSyn 'Exp
 
 class ExpOrVal (k :: DKind)
 instance ExpOrVal ('Exp)
@@ -36,9 +35,9 @@ instance ExpOrVal ('Val)
 -- | Declarative syntax of expressions, values, and patterns:
 data DecSyn (k :: DKind) where
     -- | Common syntax between expressions, values, and patterns:
-    X :: X -> DP
-    Nil :: DP
-    Un :: DP
+    X :: X -> Pattern
+    Nil :: Pattern
+    Un :: Pattern
 
     -- | Common syntax between expressions and values, but not patterns:
     Lam :: X :.: DecSyn k -> DV
@@ -49,7 +48,7 @@ data DecSyn (k :: DKind) where
     Case :: DecSyn k -> BigPi -> DE
 
     -- | Syntax for patterns only.
-    Wild :: DP
+    Wild :: Pattern
 
     -- | Syntax that is invariant to expressions or values or patterns:
     Pair :: DecSyn k -> DecSyn k -> DecSyn k
@@ -62,6 +61,7 @@ data DecSyn (k :: DKind) where
     Ann :: ExpOrVal k => DecSyn k ::: A -> DecSyn k
 
 -- | Match on Inj1 or Inj2
+pattern InjK :: DecSyn k -> DecSyn k
 pattern InjK k <- 
   (
   (\case
@@ -73,8 +73,10 @@ pattern InjK k <-
   )
 
 -- | Map Inj1/Inj2 to arguments 1 and 2
-ak (Inj1 _) a b = a
-ak (Inj2 _) a b = b
+ak :: DecSyn k -> a -> a -> a
+ak (Inj1 _) a _ = a
+ak (Inj2 _) _ b = b
+ak _ _ _ = error "Non-injunction passed to ak function."
 
 
 -- | Spines and non-empty spines
@@ -82,8 +84,9 @@ type S a = [DecSyn a]
 data SPlus a = SPlus (DecSyn a) (S a)
 
 -- | Branches and branch lists
-data SmallPi = [DP] :=> DE
+data SmallPi = [Pattern] :=> DE
 type BigPi = [SmallPi]
+pattern (:|:) :: a -> [a] -> [a]
 pattern a :|: b = (a:b)
 
 --
@@ -155,6 +158,7 @@ data Syn where
     deriving (Eq, Typeable, Show, Generic)
 
 -- | Pattern for identifying a binary connective
+pattern Bin :: Syn -> Syn -> Syn
 pattern Bin a b <- 
     (
     (\case
@@ -167,6 +171,7 @@ pattern Bin a b <-
     )
 
 -- | Pattern for extracting a binary operator constructor.
+pattern Op :: (Syn -> Syn -> Syn) -> Syn
 pattern Op a <- 
     (
     (\case
@@ -179,6 +184,7 @@ pattern Op a <-
     )
 
 -- | Pattern for matching either Hat or NoHat.
+pattern U :: Alpha -> Syn
 pattern U u <- 
     (
     (\case
@@ -207,22 +213,30 @@ type Q = P
 
 -- | Contexts
 type Gamma = S.Seq Info
-type Delta = FreshM Gamma
+type Delta = Gamma
+type DeltaBot = Maybe Gamma
+
+pattern Bottom :: Maybe Delta
+pattern Bottom = Nothing
+
+pattern Delta :: Delta -> Maybe Delta
+pattern Delta a = Just a
 
 -- | Patterns for Gamma,Info commonly used in paper
+pattern Comma :: S.Seq a -> a -> S.Seq a
 pattern Comma a b = (S.:|>) a b
+pattern Empty :: S.Seq a
 pattern Empty = S.Empty
 
 -- | Various judgment results and runners
-type ApDelta = FreshM (A, SmallP, Gamma)
-type DeltaBot = FreshMT Maybe Gamma
-type CoversResult = FreshM Bool
+type Judgment a = FreshM a
+type ApDelta = (A, SmallP, Delta)
 type CqDelta = ApDelta
-runDeltaBot :: DeltaBot -> Maybe Gamma
-runDeltaBot = runFreshMT
-runApDelta = runFreshM
-runDelta = runFreshM
 
+runJudgment :: FreshM a -> a
+runJudgment = runFreshM
+
+-- | Fact within a context
 data Info where
     Kappa :: Alpha ::: Kappa -> Info
     HatKappa :: Alpha ::: Kappa -> Info

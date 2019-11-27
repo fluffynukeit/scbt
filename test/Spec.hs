@@ -5,10 +5,10 @@ import Unbound.Generics.LocallyNameless
 import Test.Hspec
 import Prelude hiding (id)
 
-infer gamma e = (a,p) where (a,p,d) = runApDelta $ (gamma |- (e :=>:) :: ApDelta)
-inferSRec gamma e = (a,p) where (a,p,d) = runApDelta $ (gamma |- (e :>>?:) :: ApDelta)
-inferS gamma e = (a,p) where (a,p,d) = runApDelta $ (gamma |- (e :>>:) :: ApDelta)
-check gamma e a p = runDelta $ (gamma |- e :<=: (a, p) :: Delta)
+infer gamma e = (a,p) where (a,p,d) = runJudgment $ (gamma |- (e :=>:) :: Judgment ApDelta)
+inferSRec gamma e = (a,p) where (a,p,d) = runJudgment $ (gamma |- (e :>>?:) :: Judgment ApDelta)
+inferS gamma e = (a,p) where (a,p,d) = runJudgment $ (gamma |- (e :>>:) :: Judgment ApDelta)
+check gamma e a p = runJudgment $ (gamma |- e :<=: (a, p) :: Judgment Delta)
 
 al = s2n "al"
 alHat = s2n "alHat"

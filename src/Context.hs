@@ -8,7 +8,6 @@ import Search
 import qualified Data.Sequence as S
 import Data.List.Split
 import Unbound.Generics.LocallyNameless.Fresh
-import Control.Monad
 
 
 -- | Implementation of hole notation in section 5.2.
@@ -19,7 +18,7 @@ import Control.Monad
 -- each hole specification.
 holes :: [[Info]] -> Gamma -> [Gamma]
 holes [] gamma = [gamma] -- split on empty is just the remainder of the context
-holes ([]:_) gamma = error "Encountered empty hole specification."
+holes ([]:_) _gamma = error "Encountered empty hole specification."
 holes (is:iss) gamma = 
     let (seg:segs) = splitOn is (toList gamma) -- segs is list of list of infos
     in (S.fromList seg) : holes iss (mconcat $ map S.fromList segs)
@@ -32,14 +31,10 @@ unholes [] g = mconcat g -- nothing to change, just concat everything remaining
 unholes (is:iss) (g:gs) = g S.>< S.fromList is S.>< unholes iss gs
 
 -- | Infix forms of holes and unholes, respectively, but with arguments flipped.
+(<@>) :: Gamma -> [[Info]] -> [Gamma]
 (<@>) = flip holes
+(>@<) :: [Gamma] -> [[Info]] -> Gamma
 (>@<) = flip unholes
-
--- | Result for inconsistent context
-bottom :: DeltaBot
-bottom = mzero
-pattern Bottom = Nothing
-pattern Delta a = Just a
 
 -- | Implements Figure 12, applying a context to a Type
 class GamSub a where
@@ -59,20 +54,20 @@ instance GamSub Syn where
     gamsub gamma (Vec t a) = Vec (gamsub gamma t) (gamsub gamma a)
     gamsub gamma (V (a ::: b :.: c)) = V $ a ::: b :.: (gamsub gamma c)
     gamsub gamma (E (a ::: b :.: c)) = E $ a ::: b :.: (gamsub gamma c)
-    gamsub gamma Unit = Unit
+    gamsub _gamma Unit = Unit
 
     gamsub gamma alpha@(NoHat sym) = 
         let result = find (solution sym) gamma
         in case result of
-            Just (Equals (_ :=: tau)) -> gamsub gamma tau
-            Nothing -> alpha
+            Just (Equals (_sym :=: tau)) -> gamsub gamma tau
+            _ -> alpha
 
     gamsub gamma alphaHat@(Hat sym) = 
         let result = find (solution sym) gamma
         in case result of
-            Just (HatEquals (sym ::: kappa :=: tau)) -> gamsub gamma tau
-            Nothing -> alphaHat
+            Just (HatEquals (_sym ::: _kappa :=: tau)) -> gamsub gamma tau
+            _ -> alphaHat
 
-    gamsub gamma Zero = error "Gamma substitution into Zero term not defined."
-    gamsub gamma (Succ _) = error "Gamma substitution into Succ term not defined."
+    gamsub _gamma Zero = error "Gamma substitution into Zero term not defined."
+    gamsub _gamma (Succ _) = error "Gamma substitution into Succ term not defined."
 

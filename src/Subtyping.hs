@@ -4,47 +4,47 @@ module Subtyping where
 import Syntax
 import Judgments
 import Context
-import Check
 import Search
-import Instantiate
-import Unbound.Generics.LocallyNameless hiding (Alpha)
+import Check ()
+import Instantiate ()
 
 import Prelude hiding ((/))
 
 -- | Return the appropriate subtyping constructor based on input polarities.
 -- See Figure 4.
+join :: Pol -> Pol -> A -> B -> (:<:?:)
 join Pos _ = (:<:+:)
 join Neg _ = (:<:-:)
 join None Pos = (:<:+:)
 join None Neg = (:<:-:)
 join None None = (:<:-:)
 
-instance Turnstile (:<:?:) Delta where
+instance Turnstile (:<:?:) (Judgment Delta) where
 
   -- <:VL
   gamma |- V (al ::: k :.: a) :<:-: b | not (headV b) = do
     alHat <- fresh al
     new <- gamma `Comma` Mark alHat `Comma` Kappa (alHat ::: k) |- (Hat alHat / al) a :<:-: b
-    let [delta, theta] = new <@> [[Mark alHat]]
+    let [delta, _theta] = new <@> [[Mark alHat]]
     return delta
 
   -- <:VR
   gamma |- a :<:-: V (be ::: k :.: b) = do
     new <- gamma `Comma` Kappa (be ::: k) |- a :<:-: b
-    let [delta, theta] = new <@> [[Kappa (be ::: k)]]
+    let [delta, _theta] = new <@> [[Kappa (be ::: k)]]
     return delta
 
   -- <:EL
   gamma |- E (al ::: k :.: a) :<:+: b = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :<:+: b
-    let [delta, theta] = new <@> [[Kappa (al ::: k)]]
+    let [delta, _theta] = new <@> [[Kappa (al ::: k)]]
     return delta
 
   -- <:ER
   gamma |- a :<:+: E (be ::: k :.: b) | not (headE a) = do
     beHat <- fresh be
     new <- gamma `Comma` Mark beHat `Comma` Kappa (beHat ::: k) |- a :<:+: (Hat beHat / be) b
-    let [delta, theta] = new <@> [[Mark beHat]]
+    let [delta, _theta] = new <@> [[Mark beHat]]
     return delta
 
   gamma |- a :<:+: b 
@@ -59,7 +59,7 @@ instance Turnstile (:<:?:) Delta where
   gamma |- a :<:+: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
   gamma |- a :<:-: b | not (headV a || headE a || headV b || headE b) = gamma |- a :===: b
 
-instance Turnstile (P :===: Q) Delta where
+instance Turnstile (P :===: Q) (Judgment Delta) where
 
   -- PropEq
   gamma |- (t1 :=: t1') :===: (t2 :=: t2') = do
@@ -67,7 +67,7 @@ instance Turnstile (P :===: Q) Delta where
     theta |- gamsub theta t1' :=*=: gamsub theta t2' ::: N
 
 
-instance Turnstile (A :===: B) Delta where
+instance Turnstile (A :===: B) (Judgment Delta) where
   
   -- =Var
   gamma |- NoHat a :===: NoHat a' | a == a' = return gamma
@@ -81,7 +81,7 @@ instance Turnstile (A :===: B) Delta where
   -- =Bin
   gamma |- Bin a1 a2 :===: Bin b1 b2 = do
     theta <- gamma |- a1 :===: b1
-    theta |- gamsub theta a1 :===: gamsub theta b2
+    theta |- gamsub theta a2 :===: gamsub theta b2
 
   -- =Vec
   gamma |- Vec t1 a1 :===: Vec t2 a2 = do
@@ -93,13 +93,13 @@ instance Turnstile (A :===: B) Delta where
   -- =V
   gamma |- V (al ::: k :.: a) :===: V (al' ::: k' :.: b) | al == al' && k == k' = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :===: b
-    let [delta, delta'] = new <@> [[Kappa (al ::: k)]]
+    let [delta, _delta'] = new <@> [[Kappa (al ::: k)]]
     return delta
 
   -- =E
   gamma |- E (al ::: k :.: a) :===: E (al' ::: k' :.: b) | al == al' && k == k' = do
     new <- gamma `Comma` Kappa (al ::: k) |- a :===: b
-    let [delta, delta'] = new <@> [[Kappa (al ::: k)]]
+    let [delta, _delta'] = new <@> [[Kappa (al ::: k)]]
     return delta
 
   -- =Implies

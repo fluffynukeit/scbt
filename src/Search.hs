@@ -6,7 +6,6 @@ module Search
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf, filtered)
 import Unbound.Generics.LocallyNameless
 import qualified Data.Set as S
-import Data.Typeable
 import Data.Maybe
 import Data.Foldable
 import qualified Data.Sequence ()
@@ -15,6 +14,7 @@ import Syntax hiding (Alpha)
 import qualified Syntax as X (Alpha)
 
 -- | Variable substitution. J / K means replace variable K with J.
+(/) :: Subst b a => b -> Name b -> a -> a
 (/) e nm = subst nm e
 
 -- | Determine if name is used in a term or type.
@@ -34,25 +34,26 @@ setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv)
 solution :: X.Alpha -> Info -> Bool
 solution a (Equals (a' :=: _)) = a == a'
 solution a (HatEquals (a' ::: _ :=: _)) = a == a'
-solution a _ = False
+solution _ _ = False
 
 -- | Determine whether an Info is a solution fact with matching sort.
 solutionHat :: X.Alpha -> Kappa -> Info -> Bool
 solutionHat a k (HatEquals (a' ::: k' :=: _)) = a == a' && k == k'
-solutionHat a k _ = False
+solutionHat _ _ _ = False
 
 -- | Determine whether a context contains a solution for the variable.
 solved :: X.Alpha -> Gamma -> Bool
 solved a = isJust . find (solution a)
 
 -- | Determine whether an existential is solved in the context.
+solvedHat :: X.Alpha -> Kappa -> Gamma -> Bool
 solvedHat a k = isJust . find (solutionHat a k)
 
 -- | Determine whether an Info is an unsolved variable.
 problem :: X.Alpha -> Info -> Bool
 problem a (Kappa (a' ::: _)) = a == a'
 problem a (HatKappa (a' ::: _)) = a == a'
-problem a _ = False
+problem _ _ = False
 
 -- | Determine whether a context contains the unsolved variable.
 unsolved :: X.Alpha -> Gamma -> Bool

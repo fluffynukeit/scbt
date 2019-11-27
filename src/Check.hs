@@ -7,17 +7,17 @@ import Judgments
 import Syntax
 import Context
 import Search
-import Instantiate
+import Instantiate ()
 
-instance Turnstile Ptrue Delta where
+instance Turnstile Ptrue (Judgment Delta) where
 
   -- CheckpropEq
   gamma |- Ptrue (t1 :=: t2) = gamma |- t1 :=*=: t2 ::: N
 
-instance Turnstile (:=*=:) Delta where
+instance Turnstile (:=*=:) (Judgment Delta) where
 
   -- CheckeqVar
-  gamma |- U u :=*=: U u' ::: k | u == u' = return gamma
+  gamma |- U u :=*=: U u' ::: _k | u == u' = return gamma
 
   -- CheckeqUnit
   gamma |- Unit :=*=: Unit ::: Star = return gamma
@@ -26,7 +26,7 @@ instance Turnstile (:=*=:) Delta where
   gamma |- Zero :=*=: Zero ::: N = return gamma
 
   -- CheckeqSucc
-  gamma |- Succ t1 :=*=: Succ t2 ::: N = gamma |- t1 :=*=: t1 ::: N
+  gamma |- Succ t1 :=*=: Succ t2 ::: N = gamma |- t1 :=*=: t2 ::: N
 
   -- CheckeqBin
   gamma |- Bin tau1 tau2 :=*=: Bin tau1' tau2' ::: Star = do

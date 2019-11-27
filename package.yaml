@@ -35,13 +35,17 @@ default-extensions:
   - DeriveGeneric
   - FlexibleContexts
   - PostfixOperators
+  - ScopedTypeVariables
 
 dependencies:
 - base >= 4.7 && < 5
 
 library:
   source-dirs: src
-  ghc-options: -Wall
+  ghc-options:
+    - -Wall
+    - -fno-warn-orphans
+    - -fno-warn-incomplete-patterns
   dependencies:
     - text
     - containers

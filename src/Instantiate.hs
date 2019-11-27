@@ -4,12 +4,10 @@ module Instantiate where
 import Syntax
 import Context
 import Judgments
-import WellFormed
 import Search
+import WellFormed ()
 
-import Data.Text
-
-instance Turnstile (:=) Delta where 
+instance Turnstile (:=) (Judgment Delta) where 
 
   -- InstZero
   gamma |- a := Zero ::: N | h@[_,_] <- gamma <@> [[HatKappa $ a ::: N]] = 
@@ -42,7 +40,7 @@ instance Turnstile (:=) Delta where
 
   -- InstSolve
   gamma |- a := tau ::: k 
-    | h@[gam0, gam1] <- gamma <@> [[HatKappa $ a ::: k]] 
+    | h@[gam0, _gam1] <- gamma <@> [[HatKappa $ a ::: k]] 
     , gam0 |- tau ::: k 
     = return $ h >@< [[HatEquals $ a ::: k :=: tau]]
 

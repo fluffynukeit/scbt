@@ -15,13 +15,13 @@ instance Turnstile (Tau ::: Kappa) Bool where
     gamma |- Hat a ::: k = solvedHat a k gamma
 
     -- UnitSort
-    gamma |- Unit ::: Star = True
+    _gamma |- Unit ::: Star = True
 
     -- BinSort
     gamma |- Bin tau1 tau2 ::: Star = gamma |- tau1 ::: Star && gamma |- tau2 ::: Star
 
     -- ZeroSort
-    gamma |- Zero ::: N = True
+    _gamma |- Zero ::: N = True
 
     -- SuccSort
     gamma |- Succ t ::: N = gamma |- t ::: N
@@ -40,7 +40,7 @@ instance Turnstile Type Bool where
     gamma |- Type (Hat a) = solvedHat a Star gamma
 
     -- UnitWF
-    gamma |- Type Unit = True
+    _gamma |- Type Unit = True
 
     -- UnitWF
     gamma |- Type (Bin a b) = gamma |- Type a && gamma |- Type b
@@ -78,6 +78,7 @@ instance Turnstile Ptypes Bool where
     gamma |- Ptypes p types = all (\(Type a)-> gamma |- Ptype a p) types
 
 -- | Wellformedness of contexts. 
+ctx :: Gamma -> Bool
 
 -- EmptyCtx
 ctx Empty = True
@@ -90,8 +91,8 @@ ctx (gamma `Comma` XAp (x ::: a) Bang) =
     ctx gamma && not (domX x gamma) && gamma |- Type a && null (setFEV (gamsub gamma a))
 
 -- VarCtx
-ctx (gamma `Comma` Kappa (u ::: k)) = ctx gamma && not (dom u gamma)
-ctx (gamma `Comma` HatKappa (u ::: k)) = ctx gamma && not (dom u gamma)
+ctx (gamma `Comma` Kappa (u ::: _k)) = ctx gamma && not (dom u gamma)
+ctx (gamma `Comma` HatKappa (u ::: _k)) = ctx gamma && not (dom u gamma)
 
 -- SolvedCtx
 ctx (gamma `Comma` HatEquals (a ::: k :=: t)) =
