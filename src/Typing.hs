@@ -22,7 +22,7 @@ import Prelude hiding ((/), pi)
 
 -- | Check if an expression is a case statement.
 isCase :: DecSyn k -> Bool
-isCase (Case _ _) = True
+isCase (Case _) = True
 isCase _ = False
 
 -- | Checking against an expression against input type
@@ -86,7 +86,7 @@ instance Turnstile ((:<=:) (DecSyn k)) (Judgment Delta) where
   -- Case
   -- Note: this complicated pattern guard is here so that if coverage is not satisifed, then the 
   -- Sub rule gets tried as a fallthrough.
-  gamma |- Case e pi :<=: (c, p) | (True, delta') <- runJudgment $ do
+  gamma |- Case (e, pi) :<=: (c, p) | (True, delta') <- runJudgment $ do
     (a, q, theta) <- gamma |- (e :=>:)
     delta <- theta |- (pi ::: ([gamsub theta a], q)) :<=: (gamsub theta c, p)
     result <- delta |- pi `Covers` ([gamsub delta a], q)

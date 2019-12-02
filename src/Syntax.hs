@@ -45,7 +45,7 @@ data DecSyn (k :: DKind) where
 
     -- | Syntax for expressions only.
     App :: DecSyn k -> SPlus k -> DE
-    Case :: DecSyn k -> BigPi -> DE
+    Case :: (DecSyn k, BigPi) -> DE
 
     -- | Syntax for patterns only.
     Wild :: Pattern
