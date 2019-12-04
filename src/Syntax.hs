@@ -8,7 +8,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
 -- | Variable types for expressions and values.
-type X = Name (DecSyn 'Pat)
+type X = Name (SrcSyn 'Pat)
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
@@ -16,52 +16,52 @@ pattern (:.:) :: a -> b -> Bind a b
 pattern a :.: b = B a b
 deriving instance (Eq a, Eq b) => Eq (a :.: b)
 
--- | = Declarative syntax from Figure 2 =
--- Note: patterns don't have () listed in Figure 2 but they should.
+-- | = Source syntax from Figure 1 =
+-- Note: patterns don't have () listed in Figure 1 but they should.
 -- Also, Wild _ is not listed, but it should as well.
 
--- | DKind distinguishes declarative syntax of expressions, values
+-- | SKind distinguishes source syntax of expressions, values
 -- and patterns. Each kind identifies the largest applicable
 -- set for the syntax.
-data DKind = Exp | Val | Pat
-type Pattern = DecSyn 'Pat
-type DV = DecSyn 'Val
-type DE = DecSyn 'Exp
+data SKind = Exp | Val | Pat
+type Pattern = SrcSyn 'Pat
+type SV = SrcSyn 'Val
+type SE = SrcSyn 'Exp
 
-class ExpOrVal (k :: DKind)
+class ExpOrVal (k :: SKind)
 instance ExpOrVal ('Exp)
 instance ExpOrVal ('Val)
 
--- | Declarative syntax of expressions, values, and patterns:
-data DecSyn (k :: DKind) where
+-- | Source syntax of expressions, values, and patterns:
+data SrcSyn (k :: SKind) where
     -- | Common syntax between expressions, values, and patterns:
     X :: X -> Pattern
     Nil :: Pattern
     Un :: Pattern
 
     -- | Common syntax between expressions and values, but not patterns:
-    Lam :: X :.: DecSyn k -> DV
-    Rec :: X :.: DV -> DV
+    Lam :: X :.: SrcSyn k -> SV
+    Rec :: X :.: SV -> SV
 
     -- | Syntax for expressions only.
-    App :: DecSyn k -> SPlus k -> DE
-    Case :: (DecSyn k, BigPi) -> DE
+    App :: SrcSyn k -> SPlus k -> SE
+    Case :: (SrcSyn k, BigPi) -> SE
 
     -- | Syntax for patterns only.
     Wild :: Pattern
 
     -- | Syntax that is invariant to expressions or values or patterns:
-    Pair :: DecSyn k -> DecSyn k -> DecSyn k
-    Inj1 :: DecSyn k -> DecSyn k
-    Inj2 :: DecSyn k -> DecSyn k
-    (::::) :: DecSyn k -> DecSyn k -> DecSyn k
+    Pair :: SrcSyn k -> SrcSyn k -> SrcSyn k
+    Inj1 :: SrcSyn k -> SrcSyn k
+    Inj2 :: SrcSyn k -> SrcSyn k
+    (::::) :: SrcSyn k -> SrcSyn k -> SrcSyn k
     -- TODO: add data kind to distinguish vector from non-vector?
 
     -- | Syntax that is invariant to expressions OR values, but NOT patterns:
-    Ann :: ExpOrVal k => DecSyn k ::: A -> DecSyn k
+    Ann :: ExpOrVal k => SrcSyn k ::: A -> SrcSyn k
 
 -- | Match on Inj1 or Inj2
-pattern InjK :: DecSyn k -> DecSyn k
+pattern InjK :: SrcSyn k -> SrcSyn k
 pattern InjK k <- 
   (
   (\case
@@ -73,18 +73,18 @@ pattern InjK k <-
   )
 
 -- | Map Inj1/Inj2 to arguments 1 and 2
-ak :: DecSyn k -> a -> a -> a
+ak :: SrcSyn k -> a -> a -> a
 ak (Inj1 _) a _ = a
 ak (Inj2 _) _ b = b
 ak _ _ _ = error "Non-injunction passed to ak function."
 
 
 -- | Spines and non-empty spines
-type S a = [DecSyn a]
-data SPlus a = SPlus (DecSyn a) (S a)
+type S a = [SrcSyn a]
+data SPlus a = SPlus (SrcSyn a) (S a)
 
 -- | Branches and branch lists
-data SmallPi = [Pattern] :=> DE
+data SmallPi = [Pattern] :=> SE
 type BigPi = [SmallPi]
 pattern (:|:) :: a -> [a] -> [a]
 pattern a :|: b = (a:b)

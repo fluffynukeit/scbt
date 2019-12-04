@@ -21,12 +21,12 @@ import Prelude hiding ((/), pi)
 
 
 -- | Check if an expression is a case statement.
-isCase :: DecSyn k -> Bool
+isCase :: SrcSyn k -> Bool
 isCase (Case _) = True
 isCase _ = False
 
 -- | Checking against an expression against input type
-instance Turnstile ((:<=:) (DecSyn k)) (Judgment Delta) where
+instance Turnstile ((:<=:) (SrcSyn k)) (Judgment Delta) where
 
     -- Rec
   gamma |- (Rec (x :.: v)) :<=: (a,p) = do
