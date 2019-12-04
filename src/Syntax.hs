@@ -7,9 +7,6 @@ import Unbound.Generics.LocallyNameless.Bind (Bind(..))
 import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
 
--- | Variable types for expressions and values.
-type X = Name (SrcSyn 'Pat)
-
 -- | Shorthand for binding
 type a :.: b = Bind a b
 pattern (:.:) :: a -> b -> Bind a b
@@ -20,76 +17,89 @@ deriving instance (Eq a, Eq b) => Eq (a :.: b)
 -- Note: patterns don't have () listed in Figure 1 but they should.
 -- Also, Wild _ is not listed, but it should as well.
 
--- | SKind distinguishes source syntax of expressions, values
--- and patterns. Each kind identifies the largest applicable
--- set for the syntax.
-data SKind = Exp | Val | Pat
-type Pattern = SrcSyn 'Pat
-type SV = SrcSyn 'Val
-type SE = SrcSyn 'Exp
+type X = Name E
 
-class ExpOrVal (k :: SKind)
-instance ExpOrVal ('Exp)
-instance ExpOrVal ('Val)
+-- | Expressions
+data E where
+  X :: X -> E
+  Un :: E
+  Lam :: X :.: E -> E
+  App :: E -> SPlus -> E
+  Rec :: X :.: V -> E
+  Ann :: E ::: A -> E
+  Pair :: E -> E -> E
+  Inj1 :: E -> E
+  Inj2 :: E -> E
+  Case :: (E, BigPi) -> E
+  Nil :: E
+  (::::) :: E -> E -> E
 
--- | Source syntax of expressions, values, and patterns:
-data SrcSyn (k :: SKind) where
-    -- | Common syntax between expressions, values, and patterns:
-    X :: X -> Pattern
-    Nil :: Pattern
-    Un :: Pattern
+-- | Values
+data V 
+  = VX X
+  | VUnit
+  | VLam (X :.: E)
+  | VRec (X :.: V)
+  | VAnn (V ::: A)
+  | VPair V V
+  | VInj1 V
+  | VInj2 V
+  | VNil
+  | VConcat V V
 
-    -- | Common syntax between expressions and values, but not patterns:
-    Lam :: X :.: SrcSyn k -> SV
-    Rec :: X :.: SV -> SV
+-- | Patterns
+data Rho
+  = RhoX X
+  | RhoUnit
+  | RhoPair Rho Rho
+  | RhoInj1 Rho
+  | RhoInj2 Rho
+  | RhoNil
+  | RhoConcat Rho Rho
+  | Wild
 
-    -- | Syntax for expressions only.
-    App :: SrcSyn k -> SPlus k -> SE
-    Case :: (SrcSyn k, BigPi) -> SE
+-- | Typeclass supporting convenience patterns for Injections
+class Inj a where
+  unInj :: a -> Maybe a
+  isInj1 :: a -> Maybe Bool
 
-    -- | Syntax for patterns only.
-    Wild :: Pattern
+instance Inj Rho where
+  unInj (RhoInj1 a) = Just a
+  unInj (RhoInj2 a) = Just a
+  unInj _ = Nothing
+  isInj1 (RhoInj1 _) = Just True
+  isInj1 (RhoInj2 _) = Just False
+  isInj1 _ = Nothing
 
-    -- | Syntax that is invariant to expressions or values or patterns:
-    Pair :: SrcSyn k -> SrcSyn k -> SrcSyn k
-    Inj1 :: SrcSyn k -> SrcSyn k
-    Inj2 :: SrcSyn k -> SrcSyn k
-    (::::) :: SrcSyn k -> SrcSyn k -> SrcSyn k
-    -- TODO: add data kind to distinguish vector from non-vector?
-
-    -- | Syntax that is invariant to expressions OR values, but NOT patterns:
-    Ann :: ExpOrVal k => SrcSyn k ::: A -> SrcSyn k
+instance Inj E where
+  unInj (Inj1 a) = Just a
+  unInj (Inj2 a) = Just a
+  unInj _ = Nothing
+  isInj1 (Inj1 _) = Just True
+  isInj1 (Inj2 _) = Just False
+  isInj1 _ = Nothing
 
 -- | Match on Inj1 or Inj2
-pattern InjK :: SrcSyn k -> SrcSyn k
+pattern InjK :: Inj a => a -> a
 pattern InjK k <- 
-  (
-  (\case
-  Inj1 a -> Just a
-  Inj2 a -> Just a
-  _ -> Nothing
-  )
-  -> Just k
-  )
+  (unInj -> Just k)
 
 -- | Map Inj1/Inj2 to arguments 1 and 2
-ak :: SrcSyn k -> a -> a -> a
-ak (Inj1 _) a _ = a
-ak (Inj2 _) _ b = b
+ak :: Inj b => b -> a -> a -> a
+ak (isInj1 -> Just True) a _ = a
+ak (isInj1 -> Just False) _ b = b
 ak _ _ _ = error "Non-injunction passed to ak function."
 
-
 -- | Spines and non-empty spines
-type S a = [SrcSyn a]
-data SPlus a = SPlus (SrcSyn a) (S a)
+type S = [E]
+data SPlus = SPlus E S
 
 -- | Branches and branch lists
-data SmallPi = [Pattern] :=> SE
+data SmallPi = [Rho] :=> E
 type BigPi = [SmallPi]
 pattern (:|:) :: a -> [a] -> [a]
 pattern a :|: b = (a:b)
 
---
 -- | Sorts: kappa
 data Kappa = Star | N
     deriving (Eq, Show, Generic)

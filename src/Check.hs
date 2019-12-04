@@ -45,7 +45,7 @@ instance Turnstile (:=*=:) (Judgment Delta) where
       , a `notElem` setFV t
       = gamma |- a := t ::: k
 
-chkI :: SrcSyn k -> Bool
+chkI :: E -> Bool
 chkI (Lam _) = True
 chkI Un = True
 chkI (Pair _ _) = True

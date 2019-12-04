@@ -41,9 +41,9 @@ infix 6 :=
 
 data (:<=:) k = k :<=: (A, SmallP) -- Algorithmic checking, Figure 14a. Also pattern branch checking, Figure 24.
 infix 6 :<=:
-data (:=>:) k = (:=>:) (SrcSyn k) -- Algorithmic synthesis, Figure 14a
-data (:>>:) k = (:>>:) (S k ::: A, SmallP) -- Algorithmic spine typing, Figure 14a
-data (:>>?:) k = (:>>?:) (S k ::: A, SmallP) -- Algorithmic spine typing with principality recovery, Figure 14a
+data (:=>:) = (:=>:) E -- Algorithmic synthesis, Figure 14a
+data (:>>:) = (:>>:) (S ::: A, SmallP) -- Algorithmic spine typing, Figure 14a
+data (:>>?:) = (:>>?:) (S ::: A, SmallP) -- Algorithmic spine typing with principality recovery, Figure 14a
 
 data Covers a = Covers a ([A], SmallQ) -- Algorithmic match coverage, Figure 25
 

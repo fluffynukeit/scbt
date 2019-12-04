@@ -10,14 +10,14 @@ import Prelude hiding (pi)
 
 -- | Pattern expansion, Figure 9.
 --
-xWild :: Pattern -> Bool
-xWild (X _) = True
+xWild :: Rho -> Bool
+xWild (RhoX _) = True
 xWild (Wild) = True
 xWild _ = False
 
-unit :: Pattern -> Bool
-unit (Un) = True
-unit _ = False
+isUnit :: Rho -> Bool
+isUnit (RhoUnit) = True
+isUnit _ = False
 
 -- | Vector expansion
 (~>::) :: BigPi -> (BigPi, BigPi)
@@ -25,17 +25,17 @@ unit _ = False
 (~>::) ((rho:rhos) :=> e :|: pi) | xWild rho = 
   let (a, b) = (pi ~>::)
   in ( rhos :=> e :|: a, (Wild:Wild:rhos) :=> e :|: b )
-(~>::) ((Nil:rhos) :=> e :|: pi) = 
+(~>::) ((RhoNil:rhos) :=> e :|: pi) = 
   let (a, b) = (pi ~>::)
   in ( rhos :=> e :|: a, b)
-(~>::) (((rho :::: rho'):rhos) :=> e :|: pi) = 
+(~>::) (((RhoConcat rho rho'):rhos) :=> e :|: pi) = 
   let (a,b) = (pi ~>::)
   in (a, (rho:rho':rhos) :=> e :|: b)
 
 -- | Pair expansion
 (~>*) :: BigPi -> BigPi
 (~>*) [] = []
-(~>*) (((Pair rho1 rho2):rhos) :=> e :|: pi) = 
+(~>*) (((RhoPair rho1 rho2):rhos) :=> e :|: pi) = 
   let pi' = (pi ~>*)
   in (rho1:rho2:rhos) :=> e :|: pi'
 (~>*) ((rho:rhos) :=> e :|: pi) | xWild rho = 
@@ -48,10 +48,10 @@ unit _ = False
 (~>+) ((rho:rhos) :=> e :|: pi) | xWild rho =
   let (piL, piR) = (pi ~>+)
   in ( (Wild:rhos) :=> e :|: piL, (Wild:rhos) :=> e :|: piR )
-(~>+) (((Inj1 rho):rhos) :=> e :|: pi) = 
+(~>+) (((RhoInj1 rho):rhos) :=> e :|: pi) = 
   let (piL, piR) = (pi ~>+)
   in ( (rho:rhos) :=> e :|: piL, piR)
-(~>+) (((Inj2 rho):rhos) :=> e :|: pi) = 
+(~>+) (((RhoInj2 rho):rhos) :=> e :|: pi) = 
   let (piL, piR) = (pi ~>+)
   in ( piL, (rho:rhos) :=> e :|: piR )
 
@@ -65,16 +65,16 @@ unit _ = False
 -- | Unit expansion
 (~>|) :: BigPi -> BigPi
 (~>|) [] = []
-(~>|) ((rho:rhos) :=> e :|: pi) | xWild rho || unit rho =
+(~>|) ((rho:rhos) :=> e :|: pi) | xWild rho || isUnit rho =
   let pi' = (pi ~>|)
   in rhos :=> e :|: pi'
 
 -- | Guarded check, Pattern list pi contains a list pattern constructor at the head position
 guarded :: BigPi -> Bool
-guarded ((Nil:_rhos) :=> _e :|: _pi) = True
-guarded (((_rho :::: _rho'):_rhos) :=> _e :|: _pi) = True
+guarded ((RhoNil:_rhos) :=> _e :|: _pi) = True
+guarded (((RhoConcat _rho _rho'):_rhos) :=> _e :|: _pi) = True
 guarded ((Wild:_rhos) :=> _e :|: pi) = guarded pi
-guarded (((X _x):_rhos) :=> _e :|: pi) = guarded pi
+guarded (((RhoX _x):_rhos) :=> _e :|: pi) = guarded pi
 
 
 -- Under context gamma, patterns pi cover the types As

@@ -21,16 +21,29 @@ import Prelude hiding ((/), pi)
 
 
 -- | Check if an expression is a case statement.
-isCase :: SrcSyn k -> Bool
+isCase :: E -> Bool
 isCase (Case _) = True
 isCase _ = False
 
+-- | Cast a value to an expression.
+toE :: V -> E
+toE (VX a) = X a
+toE VUnit = Un
+toE (VLam a) = Lam a
+toE (VRec a) = Rec a
+toE (VAnn (v ::: a)) = Ann $ toE v ::: a
+toE (VPair a b) = Pair (toE a) (toE b)
+toE (VInj1 a) = Inj1 $ toE a
+toE (VInj2 a) = Inj2 $ toE a
+toE VNil = Nil
+toE (VConcat a b) = toE a :::: toE b
+
 -- | Checking against an expression against input type
-instance Turnstile ((:<=:) (SrcSyn k)) (Judgment Delta) where
+instance Turnstile ((:<=:) E) (Judgment Delta) where
 
     -- Rec
   gamma |- (Rec (x :.: v)) :<=: (a,p) = do
-    new <- gamma `Comma` (XAp (x ::: a) p) |- v :<=: (a,p)
+    new <- gamma `Comma` (XAp (x ::: a) p) |- toE v :<=: (a,p)
     let [delta, _theta] = new <@> [[XAp (x ::: a) p]]
     return delta
 
@@ -135,7 +148,7 @@ instance Turnstile ((:<=:) (SrcSyn k)) (Judgment Delta) where
     theta |- a `op` b
 
 -- | Expression e synthesizes to output type A and new context Delta
-instance Turnstile ((:=>:) k) (Judgment ApDelta) where
+instance Turnstile (:=>:) (Judgment ApDelta) where
 
   -- Note: I can construct synthesis using postfix :=>: due to 
   -- PostfixOperators extension, but I apparently cannot pattern match
@@ -157,7 +170,7 @@ instance Turnstile ((:=>:) k) (Judgment ApDelta) where
 
 -- | Passing spine s to a function of type A synthesizes type C.
 -- (Not recovering principality)
-instance Turnstile ((:>>:) k) (Judgment CqDelta) where
+instance Turnstile (:>>:) (Judgment CqDelta) where
   
   -- VSpine
   gamma |- (:>>:) ((e:s) ::: V (al ::: k :.: a), _p) = do
@@ -192,7 +205,7 @@ instance Turnstile ((:>>:) k) (Judgment CqDelta) where
 
 -- | Passing spine s to function of type A synthesizes type C.
 -- (Recover principality if possible)
-instance Turnstile ((:>>?:) k) (Judgment CqDelta) where
+instance Turnstile (:>>?:) (Judgment CqDelta) where
 
   -- SpinePass and SpineRecover
   gamma |- (:>>?:) (s ::: a, p) = do
@@ -221,7 +234,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
   gamma |- [] :=> e ::: ([], _q) :<=: (c, p) = gamma |- e :<=: (c, p)
 
   -- MatchUnit
-  gamma |- (Un:rho) :=> e ::: (Unit:as, q) :<=: (c, p) = 
+  gamma |- (RhoUnit:rho) :=> e ::: (Unit:as, q) :<=: (c, p) = 
     gamma |- rho :=> e ::: (as, q) :<=: (c, p)
 
   -- MatchE
@@ -239,7 +252,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     gamma |- rho :=> e ::: ((a:as), Slash) :<=: (c, smallp)
   
   -- MatchX
-  gamma |- (Pair rho1 rho2 : rho) :=> e ::: ((a1 :*: a2):as, q) :<=: (c, p) =
+  gamma |- (RhoPair rho1 rho2 : rho) :=> e ::: ((a1 :*: a2):as, q) :<=: (c, p) =
     gamma |- (rho1:rho2:rho) :=> e ::: (a1:a2:as, q) :<=: (c, p)
 
   -- Match+k
@@ -247,7 +260,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     gamma |- (rho:rhos) :=> e ::: ((ak i a1 a2):as, q) :<=: (c, p)
 
   -- MatchNeg
-  gamma |- ((X z):rho) :=> e ::: (a:as, q) :<=: (c, p) | not (headV a || headE a) = do
+  gamma |- ((RhoX z):rho) :=> e ::: (a:as, q) :<=: (c, p) | not (headV a || headE a) = do
     let e' = e -- FIXME TODO where does e' come from !??!
     new <- gamma `Comma` XAp (z ::: a) Bang |- rho :=> e' ::: (as, q) :<=: (c, p)
     let [delta, _delta'] = new <@> [[XAp (z ::: a) Bang]]
@@ -258,11 +271,11 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     gamma |- rho :=> e ::: (as, q) :<=: (c, p)
 
   -- MatchNil
-  gamma |- (Nil:rho) :=> e ::: ((Vec t _a):as, Bang) :<=: (c, p) =
+  gamma |- (RhoNil:rho) :=> e ::: ((Vec t _a):as, Bang) :<=: (c, p) =
     gamma |- (t :=: Zero, rho :=> e ::: as, Bang) :<=: (c, p)
 
   -- MatchCons
-  gamma |- ((rho1 :::: rho2):rho) :=> e ::: ((Vec t a):as, Bang) :<=: (c, p) = do
+  gamma |- ((RhoConcat rho1 rho2):rho) :=> e ::: ((Vec t a):as, Bang) :<=: (c, p) = do
     al <- fresh $ s2n "alpha"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       ( t :=: (Succ $ NoHat al)
@@ -273,11 +286,11 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     return delta
 
   -- MatchNilSlash
-  gamma |- (Nil:rho) :=> e ::: ((Vec _t _a):as, Slash) :<=: (c, p) =
+  gamma |- (RhoNil:rho) :=> e ::: ((Vec _t _a):as, Slash) :<=: (c, p) =
     gamma |- rho :=> e ::: (as, Slash) :<=: (c, p)
 
   -- MatchConsSlash
-  gamma |- ((rho1 :::: rho2):rho) :=> e ::: ((Vec _t a):as, Slash) :<=: (c, p) = do
+  gamma |- ((RhoConcat rho1 rho2):rho) :=> e ::: ((Vec _t a):as, Slash) :<=: (c, p) = do
     al <- fresh $ s2n "alpha"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       (rho1:rho2:rho) :=> e ::: ((a:(Vec (NoHat al) a):as), Slash) :<=: (c, p)
