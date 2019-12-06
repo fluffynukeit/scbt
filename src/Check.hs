@@ -45,6 +45,8 @@ instance Turnstile (:=*=:) (Judgment Delta) where
       , a `notElem` setFV t
       = gamma |- a := t ::: k
 
+  _gamma |- t1 :=*=: t2 = error ("Cannot check t1 :=*=: t2 (t1,t2): " ++ show (t1, t2))
+
 chkI :: E -> Bool
 chkI (Lam _) = True
 chkI Un = True

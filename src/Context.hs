@@ -68,6 +68,7 @@ instance GamSub Syn where
             Just (HatEquals (_sym ::: _kappa :=: tau)) -> gamsub gamma tau
             _ -> alphaHat
 
-    gamsub _gamma Zero = error "Gamma substitution into Zero term not defined."
-    gamsub _gamma (Succ _) = error "Gamma substitution into Succ term not defined."
+    gamsub _gamma Zero = Zero
+    gamsub gamma (Succ t) = Succ (gamsub gamma t)
+
 

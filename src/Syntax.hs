@@ -1,16 +1,18 @@
-module Syntax where
+ module Syntax where
 
 import qualified Data.Sequence as S (Seq, Seq((:|>), Empty))
-import Unbound.Generics.LocallyNameless hiding (Alpha)
-import Unbound.Generics.LocallyNameless.Bind (Bind(..))
-
+import Unbound.Generics.LocallyNameless.Name
+import Unbound.Generics.LocallyNameless.Bind
+import Unbound.Generics.LocallyNameless.Fresh
 import Data.Typeable (Typeable)
 import GHC.Generics hiding ((:+:), (:*:), (:.:), S)
+import Data.String
 
 -- | Shorthand for binding
 type a :.: b = Bind a b
 pattern (:.:) :: a -> b -> Bind a b
 pattern a :.: b = B a b
+infixr :.:
 deriving instance (Eq a, Eq b) => Eq (a :.: b)
 
 -- | = Source syntax from Figure 1 =
@@ -20,22 +22,23 @@ deriving instance (Eq a, Eq b) => Eq (a :.: b)
 type X = Name E
 
 -- | Expressions
-data E where
-  X :: X -> E
-  Un :: E
-  Lam :: X :.: E -> E
-  App :: E -> SPlus -> E
-  Rec :: X :.: V -> E
-  Ann :: E ::: A -> E
-  Pair :: E -> E -> E
-  Inj1 :: E -> E
-  Inj2 :: E -> E
-  Case :: (E, BigPi) -> E
-  Nil :: E
-  (::::) :: E -> E -> E
+data E
+  = X X
+  | Un
+  | Lam (X :.: E)
+  | App E SPlus
+  | Rec (X :.: V)
+  | Ann (E ::: A)
+  | Pair E E
+  | Inj1 E
+  | Inj2 E
+  | Case (E, BigPi)
+  | Nil
+  | (::::) E E
+  deriving (Show)
 
 -- | Values
-data V 
+data V
   = VX X
   | VUnit
   | VLam (X :.: E)
@@ -45,7 +48,8 @@ data V
   | VInj1 V
   | VInj2 V
   | VNil
-  | VConcat V V
+  | VCons V V
+  deriving (Show)
 
 -- | Patterns
 data Rho
@@ -55,8 +59,102 @@ data Rho
   | RhoInj1 Rho
   | RhoInj2 Rho
   | RhoNil
-  | RhoConcat Rho Rho
+  | RhoCons Rho Rho
   | Wild
+  deriving (Show)
+
+-- = Typeclasses and instances for constructing source syntax from Figure 1. =
+
+-- | Operations common to Patterns, Values, and Expressions
+class Pat a where
+  var :: X -> a
+  unit :: a
+  pair :: a -> a -> a
+  inj1 :: a -> a
+  inj2 :: a -> a
+  nil :: a
+  cons :: a -> a -> a
+
+-- | Operations common to Values and Expressions
+class Pat a => Val a where
+  lam :: X -> E -> a
+  rec :: X -> V -> a
+  ann :: a -> A -> a
+
+instance Pat Rho where
+  var = RhoX
+  unit = RhoUnit
+  pair = RhoPair
+  inj1 = RhoInj1
+  inj2 = RhoInj2
+  nil = RhoNil
+  cons = RhoCons
+
+instance Pat V where
+  var = VX
+  unit = VUnit
+  pair = VPair
+  inj1 = VInj1
+  inj2 = VInj2
+  nil = VNil
+  cons = VCons
+
+instance Pat E where
+  var = X
+  unit = Un
+  pair = Pair
+  inj1 = Inj1
+  inj2 = Inj2
+  nil = Nil
+  cons = (::::)
+
+instance Val V where
+  lam x = VLam . (x :.:)
+  rec x = VRec . (x :.:)
+  ann x = VAnn . (x :::)
+
+instance Val E where
+  lam x = Lam . (x :.:)
+  rec x = Rec . (x :.:)
+  ann x = Ann . (x :::)
+
+instance IsString X where
+  fromString = s2n
+
+instance IsString Rho where
+  fromString = var . fromString
+
+instance IsString V where
+  fromString = var . fromString
+
+instance IsString E where
+  fromString = var . fromString
+
+-- | Helpers for building source and typing syntax.
+
+caseOf :: (E, BigPi) -> E
+caseOf = Case
+
+(|$) :: E -> (E, [E]) -> E
+(|$) e (a, b) = App e (SPlus a b)
+
+(|::) :: Pat a => a -> a -> a
+(|::) = cons
+infix 7 |::
+
+(|.) :: (a -> b) -> a -> b
+(|.) = ($)
+infixr 8 |.
+
+(|:) :: (a -> b) -> a -> b
+(|:) f a = f a
+
+forall :: Alpha -> Kappa -> A -> Syn
+forall al k a = V (al ::: k :.: a)
+
+(|->) :: Syn -> Syn -> Syn
+(|->) = (:->:)
+infixr 9 |->
 
 -- | Typeclass supporting convenience patterns for Injections
 class Inj a where
@@ -93,12 +191,16 @@ ak _ _ _ = error "Non-injunction passed to ak function."
 -- | Spines and non-empty spines
 type S = [E]
 data SPlus = SPlus E S
+  deriving (Show)
 
 -- | Branches and branch lists
 data SmallPi = [Rho] :=> E
+  deriving (Show)
+infix 8 :=>
 type BigPi = [SmallPi]
 pattern (:|:) :: a -> [a] -> [a]
 pattern a :|: b = (a:b)
+infix 7 :|:
 
 -- | Sorts: kappa
 data Kappa = Star | N
@@ -135,6 +237,9 @@ type SmallQ = SmallP
 type Alpha = Name Syn
 type Beta = Alpha
 
+instance IsString Alpha where
+  fromString = s2n
+
 -- | Convenience types for Types and Terms/Monoterms
 type A = Syn
 type B = A
@@ -166,6 +271,12 @@ data Syn where
     Zero :: T
     Succ :: T -> T
     deriving (Eq, Typeable, Show, Generic)
+infixr :->:
+infixr :+:
+infixr :*:
+
+instance IsString Syn where
+  fromString = NoHat . fromString
 
 -- | Pattern for identifying a binary connective
 pattern Bin :: Syn -> Syn -> Syn

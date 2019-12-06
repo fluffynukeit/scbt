@@ -36,6 +36,7 @@ default-extensions:
   - FlexibleContexts
   - PostfixOperators
   - ScopedTypeVariables
+  - OverloadedStrings
 
 dependencies:
 - base >= 4.7 && < 5

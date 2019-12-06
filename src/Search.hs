@@ -3,31 +3,45 @@ module Search
   , module Data.Foldable
   ) where
 
-import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf, filtered)
+import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 import Unbound.Generics.LocallyNameless
 import qualified Data.Set as S
 import Data.Maybe
 import Data.Foldable
 import qualified Data.Sequence ()
 
-import Syntax hiding (Alpha)
+import Syntax hiding (Alpha, var)
 import qualified Syntax as X (Alpha)
 
 -- | Variable substitution. J / K means replace variable K with J.
 (/) :: Subst b a => b -> Name b -> a -> a
 (/) e nm = subst nm e
 
--- | Determine if name is used in a term or type.
+-- | Get set of names used in a term or type.
 setFV :: Alpha Syn => Syn -> S.Set (X.Alpha)
 setFV = S.fromList . toListOf fv 
 
--- | Determine if name is used as an existential term or type.
+-- | Get set of names used as an existential term or type. 
 setFEV :: Alpha Syn => Syn -> S.Set (X.Alpha)
-setFEV = S.fromList . toListOf (filtered (not . isUniv) . fv) 
+setFEV = setFV . killUnivs
   where 
-    isUniv = \case 
-      NoHat _ -> True
-      _ -> False
+    -- This is annoying transformation that I'm not sure how to get around cleanly.
+    -- It removes all the universal variable Alphas from the syntax tree so that
+    -- setFV only finds the existential ones.  The resulting tree could be invalid
+    -- but it is only used for finding the names anyway.
+    killUnivs (V (_al ::: _k :.: a)) = killUnivs a -- remove forall universal name
+    killUnivs (E (_al ::: _k :.: a)) = killUnivs a -- remove exists universal name
+    killUnivs (NoHat _) = Unit -- remove universal variable usages
+
+    killUnivs bin@(Bin a b) = let (Op op) = bin in killUnivs a `op` killUnivs b
+    killUnivs (p :>: a) = p :>: killUnivs a
+    killUnivs (a :/\: p) = killUnivs a :/\: p
+    killUnivs (Vec t a) = Vec (killUnivs t) (killUnivs a)
+    killUnivs (Hat a) = Hat a
+    killUnivs Unit = Unit 
+    killUnivs Zero = Zero
+    killUnivs (Succ t) = Succ (killUnivs t)
+
     
 
 -- | Determine whether an Info is a solution fact.

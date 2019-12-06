@@ -10,7 +10,7 @@ import Check
 import Assume ()
 import Covers ()
 
-import Unbound.Generics.LocallyNameless
+import Unbound.Generics.LocallyNameless.Name
 import Prelude hiding ((/), pi)
 
 -- GENERAL NOTE
@@ -36,12 +36,12 @@ toE (VPair a b) = Pair (toE a) (toE b)
 toE (VInj1 a) = Inj1 $ toE a
 toE (VInj2 a) = Inj2 $ toE a
 toE VNil = Nil
-toE (VConcat a b) = toE a :::: toE b
+toE (VCons a b) = toE a :::: toE b
 
 -- | Checking against an expression against input type
 instance Turnstile ((:<=:) E) (Judgment Delta) where
 
-    -- Rec
+  -- Rec
   gamma |- (Rec (x :.: v)) :<=: (a,p) = do
     new <- gamma `Comma` (XAp (x ::: a) p) |- toE v :<=: (a,p)
     let [delta, _theta] = new <@> [[XAp (x ::: a) p]]
@@ -168,6 +168,8 @@ instance Turnstile (:=>:) (Judgment ApDelta) where
     (a, p, theta) <- gamma |- (e :=>:)
     theta |- (((s:ss) ::: a, p) :>>?:)
 
+  _gamma |- (:=>:) e = error ("Synthesis :=>: failure: " ++ show e)
+
 -- | Passing spine s to a function of type A synthesizes type C.
 -- (Not recovering principality)
 instance Turnstile (:>>:) (Judgment CqDelta) where
@@ -275,7 +277,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     gamma |- (t :=: Zero, rho :=> e ::: as, Bang) :<=: (c, p)
 
   -- MatchCons
-  gamma |- ((RhoConcat rho1 rho2):rho) :=> e ::: ((Vec t a):as, Bang) :<=: (c, p) = do
+  gamma |- ((RhoCons rho1 rho2):rho) :=> e ::: ((Vec t a):as, Bang) :<=: (c, p) = do
     al <- fresh $ s2n "alpha"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       ( t :=: (Succ $ NoHat al)
@@ -290,7 +292,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
     gamma |- rho :=> e ::: (as, Slash) :<=: (c, p)
 
   -- MatchConsSlash
-  gamma |- ((RhoConcat rho1 rho2):rho) :=> e ::: ((Vec _t a):as, Slash) :<=: (c, p) = do
+  gamma |- ((RhoCons rho1 rho2):rho) :=> e ::: ((Vec _t a):as, Slash) :<=: (c, p) = do
     al <- fresh $ s2n "alpha"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       (rho1:rho2:rho) :=> e ::: ((a:(Vec (NoHat al) a):as), Slash) :<=: (c, p)

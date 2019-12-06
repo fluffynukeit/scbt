@@ -7,9 +7,9 @@ import Context
 import Assume()
 import Unbound.Generics.LocallyNameless
 import Prelude hiding (pi)
+import Debug.Trace
 
 -- | Pattern expansion, Figure 9.
---
 xWild :: Rho -> Bool
 xWild (RhoX _) = True
 xWild (Wild) = True
@@ -28,7 +28,7 @@ isUnit _ = False
 (~>::) ((RhoNil:rhos) :=> e :|: pi) = 
   let (a, b) = (pi ~>::)
   in ( rhos :=> e :|: a, b)
-(~>::) (((RhoConcat rho rho'):rhos) :=> e :|: pi) = 
+(~>::) (((RhoCons rho rho'):rhos) :=> e :|: pi) = 
   let (a,b) = (pi ~>::)
   in (a, (rho:rho':rhos) :=> e :|: b)
 
@@ -72,7 +72,7 @@ isUnit _ = False
 -- | Guarded check, Pattern list pi contains a list pattern constructor at the head position
 guarded :: BigPi -> Bool
 guarded ((RhoNil:_rhos) :=> _e :|: _pi) = True
-guarded (((RhoConcat _rho _rho'):_rhos) :=> _e :|: _pi) = True
+guarded (((RhoCons _rho _rho'):_rhos) :=> _e :|: _pi) = True
 guarded ((Wild:_rhos) :=> _e :|: pi) = guarded pi
 guarded (((RhoX _x):_rhos) :=> _e :|: pi) = guarded pi
 
@@ -140,7 +140,7 @@ instance Turnstile (Covers BigPi) (Judgment Bool) where
 instance Turnstile (Covers (P, BigPi)) (Judgment Bool) where
 
   -- CoversEq and CoversEqBot
-  gamma |- (t1 :=: t2, pi) `Covers` (as, Bang) = do
+  gamma |- (t1 :=: t2, pi) `Covers` (as, Bang) = traceShow ("CoversEq: " ++ show (t1 :=: t2, pi)) $ do
     let k = N -- TODO where does this kappa come from?
         q = Bang -- TODO where does this q come from?
     case runJudgment (gamma // (gamsub gamma t1 :=*=: gamsub gamma t2 ::: k)) of
