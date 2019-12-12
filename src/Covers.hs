@@ -115,7 +115,7 @@ instance Turnstile (Covers BigPi) (Judgment Bool) where
   -- CoversVec
   gamma |- pi `Covers` ((Vec t a):as, Bang) = do
     let (piL, piR) = (pi ~>::)
-    n <- fresh $ s2n "n" -- I *think* this rule introduces a variable for n
+    n <- fresh $ s2n "n:CoversVec" -- I *think* this rule introduces a variable for n
     g <- return $ guarded pi
     z <- gamma |- (t :=: Zero, piL) `Covers` (as, Bang)
     v <- gamma `Comma` Kappa (n ::: N) |- (t :=: Succ (NoHat n), piR) `Covers` (a:(Vec (NoHat n) a):as, Bang)
@@ -124,7 +124,7 @@ instance Turnstile (Covers BigPi) (Judgment Bool) where
   -- CoversVecSlash
   gamma |- pi `Covers` ((Vec _t a):as, Slash) = do
     let (piL, piR) = (pi ~>::)
-    n <- fresh $ s2n "n" -- I *think* this rule introduces a variable for n
+    n <- fresh $ s2n "n:CoversVecSlash" -- I *think* this rule introduces a variable for n
     g <- return $ guarded pi
     z <- gamma |- piL `Covers` (as, Slash)
     v <- gamma `Comma` Kappa (n ::: N) |- piR `Covers` (a:(Vec (NoHat n) a):as, Slash)
@@ -141,8 +141,8 @@ instance Turnstile (Covers (P, BigPi)) (Judgment Bool) where
 
   -- CoversEq and CoversEqBot
   gamma |- (t1 :=: t2, pi) `Covers` (as, Bang) = traceShow ("CoversEq: " ++ show (t1 :=: t2, pi)) $ do
-    let k = N -- TODO where does this kappa come from?
-        q = Bang -- TODO where does this q come from?
+    let k = undefined -- TODO where does this kappa come from?
+        q = undefined -- TODO where does this q come from?
     case runJudgment (gamma // (gamsub gamma t1 :=*=: gamsub gamma t2 ::: k)) of
       Bottom -> return True -- CoversEqBot. "Coverage succeeds since there are no possible values of that type."
       Delta delta -> delta |- pi `Covers` (map (gamsub delta) as, q) -- TODO gamma substitution into pi??

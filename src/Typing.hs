@@ -68,7 +68,7 @@ instance Turnstile ((:<=:) E) (Judgment Delta) where
 
   -- ImpliesI and ImpliesIBot
   gamma |- v :<=: (p :>: a, Bang) | chkI v = do
-    mark <- fresh $ s2n "Pmark"
+    mark <- fresh $ s2n "Pmark:ImpliesIB"
     case runJudgment $ (gamma `Comma` Mark mark) // p of
       Delta theta -> do
         new <- theta |- v :<=: (gamsub theta a, Bang)
@@ -134,7 +134,7 @@ instance Turnstile ((:<=:) E) (Judgment Delta) where
 
   -- Cons
   gamma |- (e1 :::: e2) :<=: (Vec t a, p) = do
-    al <- fresh (s2n "alHatmark")
+    al <- fresh $ s2n "alHatMark:Cons"
     gamma' <- gamma `Comma` Mark al `Comma` HatKappa (al ::: N) |- Ptrue (t :=: Succ (Hat al))
     theta <- gamma' |- e1 :<=: (gamsub gamma' a, p)
     new <- theta |- e2 :<=: (gamsub theta $ Vec (Hat al) a, Slash)
@@ -278,7 +278,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
 
   -- MatchCons
   gamma |- ((RhoCons rho1 rho2):rho) :=> e ::: ((Vec t a):as, Bang) :<=: (c, p) = do
-    al <- fresh $ s2n "alpha"
+    al <- fresh $ s2n "alpha:MatchCons"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       ( t :=: (Succ $ NoHat al)
       , (rho1:rho2:rho) :=> e ::: (a:(Vec (NoHat al) a):as)
@@ -293,7 +293,7 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
 
   -- MatchConsSlash
   gamma |- ((RhoCons rho1 rho2):rho) :=> e ::: ((Vec _t a):as, Slash) :<=: (c, p) = do
-    al <- fresh $ s2n "alpha"
+    al <- fresh $ s2n "alpha:MatchConsSlash"
     new <- gamma `Comma` Kappa (al ::: N) |- 
       (rho1:rho2:rho) :=> e ::: ((a:(Vec (NoHat al) a):as), Slash) :<=: (c, p)
     let [delta, _theta] = new <@> [[Kappa $ al ::: N]]
@@ -303,16 +303,16 @@ instance Turnstile ((:<=:) (SmallPi ::: ([A], SmallQ))) (Judgment Delta) where
 -- In this case, I have changed the notation to move the proposition P
 -- on the right hand side of the turnstile to avoid clashing with the 
 -- Assume typeclass used for assumptions leading to possibly inconsistent
--- contexts.
+-- gammas (contexts).
 instance Turnstile ((:<=:) (P, SmallPi ::: [A], SmallQ)) (Judgment Delta) where -- paper says big pi?
 
   -- MatchBottom and MatchUnify
-  gamma |- (sigma :=: tau, rho :=> e ::: as, Bang) :<=: (c, smallp) = do
-    p <- fresh $ s2n "Pmark"
-    let k = Star -- FIXME TODO where does k come from?!?
+  gamma |- (sigma :=: tau, rhos :=> e ::: as, Bang) :<=: (c, smallp) = do
+    p <- fresh $ s2n "Pmark:MatchBU"
+    let k = undefined -- FIXME TODO where does k come from?!?
     case runJudgment $ gamma `Comma` Mark p // (sigma :=*=: tau ::: k) of
       Bottom -> return gamma
       Delta theta -> do
-        new <- theta |- rho :=> e ::: (as, Bang) :<=: (c, smallp)
+        new <- theta |- rhos :=> e ::: (as, Bang) :<=: (c, smallp)
         let [delta, _delta'] = new <@> [[Mark p]]
         return delta

@@ -85,9 +85,7 @@ instance Turnstile (A :===: B) (Judgment Delta) where
 
   -- =Vec
   gamma |- Vec t1 a1 :===: Vec t2 a2 = do
-    -- I think the paper has a typo in that t1 === t2 should be a checking equation in Figure 19.
-    -- There's no === judgment defined for terms, only types.
-    theta <- gamma |- t1 :=*=: t2 ::: N
+    theta <- gamma |- t1 :===: t2
     theta |- gamsub theta a1 :===: gamsub theta a2
 
   -- =V
